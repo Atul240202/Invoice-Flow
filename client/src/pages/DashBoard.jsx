@@ -91,10 +91,16 @@ const Dashboard = () => {
             Welcome back! Here's what's happening with your business.
           </p>
         </div>
+       
         <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200">
           <Link to="/create-invoice">
             <Plus className="mr-2 h-4 w-4" />
             Create Invoice
+          </Link>
+        </Button>
+          <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200">
+          <Link to="/logout">
+            Logout
           </Link>
         </Button>
       </div>
