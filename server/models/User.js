@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
         required: true,
         minlength: 8
     },
-    buisnessName: {
+    businessName: {
         type: String
     },
     phone: {
@@ -29,6 +29,13 @@ const userSchema = new mongoose.Schema({
         match: /^[0-9]{10}$/,
         unique: true
     },
+    address: {
+    type: String
+    },
+    gstin: { type: String },
+    pan: { type: String },
+    businessType: { type: String },
+    businessAddress: { type: String },
     twoFAEnabled: {
         type: Boolean,
         default: false

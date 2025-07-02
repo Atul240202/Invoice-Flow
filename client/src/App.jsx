@@ -9,6 +9,7 @@ import Dashboard from './pages/DashBoard';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPasswordPage from "./pages/ResetPassword";
+import Settings from "./pages/Settings";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -21,6 +22,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} /> 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+        <Route path="/settings" element={<Settings />} />
       </Routes>
     </Router>
   );

@@ -4,6 +4,8 @@ import { AIInsightCard } from "../components/AIInsightCard";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
 import { Button } from "../components/button";
 import { StatCard } from "../components/Statcard";
+import { Settings } from "lucide-react";
+
 import { 
   IndianRupee, 
   Users, 
@@ -98,6 +100,13 @@ const Dashboard = () => {
             Create Invoice
           </Link>
         </Button>
+        
+        <Button asChild className="bg-gray-200 text-slate-700 hover:bg-gray-300 hover:shadow transition-all duration-200">
+          <Link to="/settings">
+          <Settings className="h-4 w-4" />
+          </Link>
+        </Button>
+
           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200">
           <Link to="/logout">
             Logout
