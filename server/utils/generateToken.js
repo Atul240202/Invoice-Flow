@@ -9,4 +9,16 @@ const generateToken = (userId) => {
     )
 }
 
-module.exports = generateToken;
+const generateResetToken = (userId) => {
+  return jwt.sign(
+    { id: userId },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '15m', 
+    }
+  );
+};
+
+module.exports = {
+    generateToken, generateResetToken
+};

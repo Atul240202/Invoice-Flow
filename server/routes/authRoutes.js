@@ -9,7 +9,7 @@ router.post(
   [
     body('fullName').notEmpty().withMessage('Full name is required'),
     body('email').isEmail().withMessage('Invalid email'),
-    body('password').isLength({ min: 6 }).withMessage('Password must be at least 8 characters'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
     body('phone').matches(/^[0-9]{10}$/).withMessage('Invalid phone number'),
   ],
   validateRequest,
@@ -25,5 +25,12 @@ router.post(
   validateRequest,
   authController.login
 );
+
+router.post('/google-login', authController.googleLogin);
+
+router.post("/forgot-password", authController.forgotPassword);
+
+router.post('/reset-password/:token', authController.resetPassword);
+
 
 module.exports = router;

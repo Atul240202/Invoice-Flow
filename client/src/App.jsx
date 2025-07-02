@@ -4,9 +4,11 @@ import reactLogo from './assets/react.svg';
 import viteLogo from '/vite.svg';
 import './App.css';
 import HomePage from './pages/HomePage';
-import LoginPage from './pages/LoginPage'; // ✅ Import added
-import Dashboard from './pages/DashBoard';  // ✅ Import added
+import LoginPage from './pages/LoginPage';
+import Dashboard from './pages/DashBoard';  
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPasswordPage from "./pages/ResetPassword";
 
 function App() {
   const [count, setCount] = useState(0);
@@ -16,7 +18,9 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<Dashboard />} /> {/* ✅ Dashboard route */}
+        <Route path="/dashboard" element={<Dashboard />} /> 
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       </Routes>
     </Router>
   );

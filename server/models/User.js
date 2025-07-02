@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
-    fullname: {
+    fullName: {
         type: String,
         required: true,
         trim: true
@@ -29,10 +29,12 @@ const userSchema = new mongoose.Schema({
         match: /^[0-9]{10}$/,
         unique: true
     },
-    twoFAauth: {
+    twoFAEnabled: {
         type: Boolean,
         default: false
     },
+    twoFactorCode: String,
+    twoFactorExpires: Date,
 }, {timestamps: true });
 
 userSchema.pre('save', async function (next){

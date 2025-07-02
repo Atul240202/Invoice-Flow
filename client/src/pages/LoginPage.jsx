@@ -45,16 +45,34 @@ export default function LoginPage() {
 
              <h1 className="text-3xl font-bold mb-6">Login with Google</h1>
       <GoogleLogin
-        onSuccess={(credentialResponse) => {
-          const decoded = jwtDecode(credentialResponse.credential);
-          console.log("User Info:", decoded);
-           navigate("/dashboard"); 
+        onSuccess={async (credentialResponse) => {
+        try {
+          const res = await fetch("http://localhost:5000/api/auth/google-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ credential: credentialResponse.credential }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem("token", data.token);
+          navigate("/dashboard");
+        } else {
+          console.error("Google login failed:", data.message);
+          alert(data.message);
+        }
+        } catch (err) {
+          console.error("Google login error:", err);
+          alert("Google login failed");
+        }
         }}
         onError={() => {
-          console.log("Login Failed");
+        console.log("Google Login Failed");
+        alert("Google Login Failed");
         }}
-      />
-          </>
+        />
+        </>
         )}
       </div>
     </div>
