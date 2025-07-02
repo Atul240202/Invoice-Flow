@@ -18,9 +18,7 @@ export default function BusinessSettings() {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get("http://localhost:5000/api/settings/profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
         setForm((prev) => ({
           ...prev,
@@ -78,9 +76,7 @@ export default function BusinessSettings() {
           address: form.address,
         },
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -95,22 +91,28 @@ export default function BusinessSettings() {
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">Business Info</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          name="businessName"
-          placeholder="Business Name"
-          className="border px-4 py-2 rounded-xl"
-          value={form.businessName}
-          onChange={handleChange}
-        />
+    <div className="bg-white shadow-xl rounded-2xl p-8 max-w-3xl mx-auto mt-6">
+      <h2 className="text-2xl font-bold text-purple-700 mb-2">Business Settings</h2>
+      <p className="text-gray-600 mb-6">Manage your company’s legal and contact details.</p>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        <div>
+          <label className="block mb-1 font-medium">Business Name</label>
+          <input
+            name="businessName"
+            placeholder="Business Name"
+            className="input"
+            value={form.businessName}
+            onChange={handleChange}
+          />
+        </div>
 
         <div>
+          <label className="block mb-1 font-medium">GSTIN</label>
           <input
             name="gstin"
             placeholder="GSTIN"
-            className="border px-4 py-2 rounded-xl w-full"
+            className="input"
             value={form.gstin}
             onChange={handleChange}
           />
@@ -118,43 +120,54 @@ export default function BusinessSettings() {
         </div>
 
         <div>
+          <label className="block mb-1 font-medium">PAN</label>
           <input
             name="pan"
             placeholder="PAN"
-            className="border px-4 py-2 rounded-xl w-full"
+            className="input"
             value={form.pan}
             onChange={handleChange}
           />
           {errors.pan && <p className="text-red-500 text-sm">{errors.pan}</p>}
         </div>
 
-        <select
-          name="businessType"
-          className="border px-4 py-2 rounded-xl"
-          value={form.businessType}
-          onChange={handleChange}
-        >
-          <option value="">Select Business Type</option>
-          <option value="Partnership">Partnership</option>
-          <option value="Private Limited">Private Limited</option>
-          <option value="Public Limited">Public Limited</option>
-          <option value="Other">Other</option>
-        </select>
+        <div>
+          <label className="block mb-1 font-medium">Business Type</label>
+          <select
+            name="businessType"
+            className="input"
+            value={form.businessType}
+            onChange={handleChange}
+          >
+            <option value="">Select Type</option>
+            <option value="Partnership">Partnership</option>
+            <option value="Private Limited">Private Limited</option>
+            <option value="Public Limited">Public Limited</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
 
-        <input
-          name="address"
-          placeholder="Business Address"
-          className="border px-4 py-2 rounded-xl"
-          value={form.address}
-          onChange={handleChange}
-        />
+        <div>
+          <label className="block mb-1 font-medium">Business Address</label>
+          <input
+            name="address"
+            placeholder="Business Address"
+            className="input"
+            value={form.address}
+            onChange={handleChange}
+          />
+        </div>
 
         <button
           type="submit"
           disabled={loading}
-          className={`bg-purple-600 text-white py-2 rounded-xl ${loading && "opacity-60"}`}
+          className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${
+            loading
+              ? "bg-purple-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-purple-600 to-blue-500 hover:shadow-xl hover:scale-[1.01] text-white"
+          }`}
         >
-          {loading ? "Saving..." : "Save"}
+          {loading ? "Saving..." : "Save Changes"}
         </button>
       </form>
     </div>

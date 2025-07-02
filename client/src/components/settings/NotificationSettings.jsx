@@ -15,16 +15,24 @@ export default function NotificationSettings() {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Notification Settings</h2>
-      <div className="flex flex-col gap-4">
-        {Object.keys(settings).map((key) => (
+      <div className="flex flex-col gap-6">
+        {Object.entries(settings).map(([key, value]) => (
           <div key={key} className="flex justify-between items-center">
-            <span className="capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-            <input
-              type="checkbox"
-              checked={settings[key]}
-              onChange={() => handleToggle(key)}
-              className="w-5 h-5"
-            />
+            <span className="capitalize text-gray-700">
+              {key.replace(/([A-Z])/g, " $1")}
+            </span>
+            <button
+              onClick={() => handleToggle(key)}
+              className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
+                value ? "bg-purple-600" : "bg-gray-300"
+              }`}
+            >
+              <div
+                className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ${
+                  value ? "translate-x-6" : "translate-x-0"
+                }`}
+              />
+            </button>
           </div>
         ))}
       </div>

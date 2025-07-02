@@ -1,28 +1,31 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
-import Dashboard from './pages/DashBoard';  
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPasswordPage from "./pages/ResetPassword";
-import Settings from "./pages/Settings";
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPasswordPage from './pages/ResetPassword';
+import DashboardLayout from './layout/DashboardLayout';
+import SettingsPage from './pages/Settings';
+import DashBoard from './pages/DashBoard';  
+
+// You can import other pages like Reports, Clients, etc., as needed.
 
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <Router>
       <Routes>
+        {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<Dashboard />} /> 
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-        <Route path="/settings" element={<Settings />} />
+
+        {/* Dashboard Routes with Layout */}
+        <Route path="/" element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<DashBoard />} />
+          <Route path="/settings"  element={<SettingsPage />} />
+          {/* Add more nested routes here */}
+        </Route>
       </Routes>
     </Router>
   );
