@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function SecuritySettings() {
   const [currentPassword, setCurrentPassword] = useState("");
@@ -6,10 +6,28 @@ export default function SecuritySettings() {
   const [twoFactor, setTwoFactor] = useState(false);
   const [message, setMessage] = useState("");
 
+  useEffect(() => {
+    const fetchSecurityStatus = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/settings/profile", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        const data = await res.json();
+        setTwoFactor(data.twoFAEnabled || false);
+      } catch (err) {
+        console.error("Failed to fetch profile info", err);
+      }
+    };
+
+    fetchSecurityStatus();
+  }, []);
+
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/settings/security`, {
+      const res = await fetch("http://localhost:5000/api/settings/security", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -31,7 +49,7 @@ export default function SecuritySettings() {
 
   const handleToggle2FA = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/settings/security`, {
+      const res = await fetch("http://localhost:5000/api/settings/security", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
