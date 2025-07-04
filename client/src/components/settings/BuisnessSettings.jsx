@@ -17,14 +17,16 @@ export default function BusinessSettings() {
     const fetchBusinessInfo = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/settings/profile", {
+        const res = await axios.get("http://localhost:5000/api/settings/business", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setForm((prev) => ({
-          ...prev,
-          ...res.data,
-          address: res.data.businessAddress || "",
-        }));
+        setForm({
+        businessName: res.data.businessName || "",
+        gstin: res.data.gstin || "",
+        pan: res.data.pan || "",
+        businessType: res.data.businessType || "",
+        address: res.data.address || "",
+      });
       } catch (err) {
         console.error("Failed to fetch business info:", err);
       }

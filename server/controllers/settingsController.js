@@ -35,7 +35,7 @@ exports.updateBusinessInfo = async (req, res) => {
         gstin,
         pan,
         businessType,
-        businessAddress: address,
+        businessAddress: businessAddress,
       },
       { new: true }
     ).select("businessName gstin pan businessType address");
@@ -46,10 +46,22 @@ exports.updateBusinessInfo = async (req, res) => {
   }
 };
 
+exports.getBusinessInfo = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select(
+      'businessName gstin pan businessType businessAddress'
+    );
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch business info" });
+  }
+};
+
 exports.updateSecuritySettings = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { currentPassword, newPassword, twoFactorEnabled } = req.body;
+    const { currentPassword, newPassword, twoFAEnabled } = req.body;
 
     const user = await User.findById(userId);
 
@@ -65,8 +77,8 @@ exports.updateSecuritySettings = async (req, res) => {
       user.password = hashedNewPassword;
     }
 
-    if (typeof twoFactorEnabled === "boolean") {
-      user.twoFAEnabled = twoFactorEnabled;
+    if (typeof twoFAEnabled === "boolean") {
+      user.twoFAEnabled = twoFAEnabled;
     }
 
     await user.save();
