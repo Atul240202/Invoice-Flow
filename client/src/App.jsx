@@ -7,7 +7,7 @@ import ResetPasswordPage from './pages/ResetPassword';
 import DashboardLayout from './layout/DashboardLayout';
 import SettingsPage from './pages/Settings';
 import DashBoard from './pages/DashBoard';  
-
+import CreateInvoice from './pages/CreateInvoice';
 // You can import other pages like Reports, Clients, etc., as needed.
 
 function App() {
@@ -24,6 +24,7 @@ function App() {
         <Route path="/" element={<DashboardLayout />}>
           <Route path="/dashboard" element={<DashBoard />} />
           <Route path="/settings"  element={<SettingsPage />} />
+          <Route path="/create-invoice" element={<CreateInvoice />} />
           {/* Add more nested routes here */}
         </Route>
       </Routes>
