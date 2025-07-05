@@ -44,7 +44,8 @@ const CreateInvoice = () => {
     cgst: 0,
     sgst: 0,
     igst: 0,
-    discount: 0,
+    discount: 0, 
+    discountPercentage: 0,
     additionalCharges: 0,
     grandTotal: 0,
     signature: null,
@@ -103,7 +104,7 @@ const CreateInvoice = () => {
     }
   });
 
-  // FIX 3: Remove hsn from newItem
+  
   
   const handleSaveAndContinue = () => {
     setCurrentStep(2);
@@ -202,74 +203,6 @@ const CreateInvoice = () => {
           />
         </div>
 
-         {/* Modal for editing fields */}
-         {showEditFields && (
-  <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center">
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">🛠️ Customize Table Columns</h2>
-        <button onClick={() => setShowEditFields(false)} className="text-gray-500 hover:text-black">
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-        {itemColumns.map((col, idx) => (
-          <div key={col.key} className="flex items-center gap-2">
-            <Input
-              value={col.label}
-              onChange={(e) => {
-                const updated = [...itemColumns];
-                updated[idx].label = e.target.value;
-                setItemColumns(updated);
-              }}
-              className="flex-1"
-              placeholder="Label"
-            />
-            <Input
-              value={col.key}
-             onChange={(e) => {
-  const updated = itemColumns.map((col, i) =>
-    i === idx ? { ...col, key: e.target.value.trim().replace(/\s+/g, '').toLowerCase() } : col
-  );
-  setItemColumns(updated);
-}}
-              className="w-32"
-              placeholder="Key"
-            />
-            <input
-              type="checkbox"
-              checked={col.visible}
-              onChange={(e) => {
-  const updated = itemColumns.map((col, i) =>
-    i === idx ? { ...col, visible: e.target.checked } : col
-  );
-  setItemColumns(updated);
-}}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="flex justify-between items-center mt-6">
-        <Button
-          variant="outline"
-          onClick={() => setItemColumns([
-            ...itemColumns,
-            {
-              key: `custom${itemColumns.length}`,
-              label: "New Field",
-              visible: true
-            }
-          ])}
-        >
-          ➕ Add Field
-        </Button>
-        <Button onClick={() => setShowEditFields(false)}>Done</Button>
-      </div>
-    </div>
-  </div>
-)}
 
         {/* Action Buttons Row */}
         <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg border shadow-sm">
@@ -300,13 +233,6 @@ const CreateInvoice = () => {
               <SelectItem value="international">International (123,456.78)</SelectItem>
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-            onClick={() => setShowEditFields(true)}
-          >
-            ⚙️ Rename/Add Fields
-          </Button>
         </div>
 
         {/* Shipping Details Section */}
@@ -362,6 +288,7 @@ const CreateInvoice = () => {
           setInvoiceData={setInvoiceData}
           gstConfig={gstConfig}
           numberFormat={numberFormat}
+          
         />
 
         <ExtrasSection
