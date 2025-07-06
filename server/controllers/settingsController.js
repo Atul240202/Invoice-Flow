@@ -35,7 +35,7 @@ exports.updateBusinessInfo = async (req, res) => {
         gstin,
         pan,
         businessType,
-        businessAddress: businessAddress,
+        businessAddress: address,
       },
       { new: true }
     ).select("businessName gstin pan businessType address");
