@@ -40,7 +40,7 @@ export const GSTConfigModal = ({
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">Configure GST Settings</DialogTitle>
         </DialogHeader>
@@ -125,7 +125,7 @@ export const GSTConfigModal = ({
           </Button>
           <Button
             onClick={handleSave}
-            className="bg-gradient-to-r from-Blue to-Cyan hover:from-blue-600 hover:to-cyan-600 text-white"
+            className="bg-gradient from-brightBlue to-brightCyan hover:from-blue-600 to-cyan-600 text-black "
           >
             Save Configuration
           </Button>
