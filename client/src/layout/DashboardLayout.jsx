@@ -7,14 +7,14 @@ export default function DashboardLayout() {
   const { isOpen } = useSidebar();
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex">
       <AppSidebar />
       <main
         className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
           isOpen ? "ml-64" : "ml-0"
         }`}
       >
-        <header className="flex items-center h-20 gap-4 px-8 border-b bg-white shadow-md">
+        <header className="flex items-center h-20 gap-4 px-8 border-b bg-fuchsia-50 shadow-md">
           <SidebarTrigger className="h-12 w-12 text-black hover:bg-purple-100 hover:text-purple-700 rounded-lg transition duration-200 border border-gray-300 hover:border-purple-400 shadow-sm hover:shadow-md bg-white" />
           
           <div className="flex items-center gap-4">
@@ -31,7 +31,7 @@ export default function DashboardLayout() {
           </div>
         </header>
 
-        <div className="flex-1 p-6 md:p-8 bg-gray-50">
+        <div className="flex-1 p-6 md:p-8 bg-white">
           <div className="max-w-7xl mx-auto">
             <Outlet />
           </div>

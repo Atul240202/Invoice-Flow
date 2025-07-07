@@ -9,7 +9,7 @@ import { GSTConfigModal } from "../components/invoice/GSTConfigModal";
 import { ItemDetailsTable } from "../components/invoice/ItemDetailsTable";
 import { TotalsSection } from "../components/invoice/TotalsSection";
 import { ExtrasSection } from "../components/invoice/ExtrasSection";
-import { BankingPreviewStep } from "../components/invoice/BankingPreviewStep";
+import  BankingPreviewStep  from "../components/invoice/BankingPreviewStep";
 import { Input } from "../components/Input";
 import { Label } from "../components/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
@@ -24,6 +24,8 @@ import { exchangeRates, currencySymbols } from "../utils/currencyUtils";
 
 const CreateInvoice = () => {
   const { toast } = useToast();
+  // you can pass defaultValues if needed
+
   const [currentStep, setCurrentStep] = useState(1);
   const [showGSTModal, setShowGSTModal] = useState(false);
   const [showShippingDetails, setShowShippingDetails] = useState(false);
@@ -37,6 +39,29 @@ const CreateInvoice = () => {
     { key: "rate", label: "Rate", visible: true },
     { key: "amount", label: "Amount", visible: true },
   ]);
+   
+   const methods = useForm({
+    defaultValues: {
+      // all fields from all steps here
+      invoiceNumber: "",
+      date: "",
+      dueDate: "",
+      billFromData: { businessName: "", address: "", city: "", state: "", pincode: "", gstin: "", email: "" },
+      billToData: { businessName: "", address: "", city: "", state: "", pincode: "", gstin: "" },
+      items: [],
+      cgst: 0,
+      sgst: 0,
+      igst: 0,
+      discount: 0,
+      additionalCharges: 0,
+      terms: "",
+      notes: "",
+      signature: null,
+      attachments: [],
+      currency: "INR",
+    }
+  });
+
 
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: "A00001",
@@ -57,7 +82,8 @@ const CreateInvoice = () => {
     terms: "",
     notes: "",
     attachments: [],
-    contactDetails: ""
+    contactDetails: "",
+    qrImage: null
   });
 
   const conversionRate = exchangeRates[invoiceData.currency] || 1;
@@ -225,18 +251,7 @@ if (invoiceData.attachments?.length) {
     });
   };
 
-  if (currentStep === 2) {
-    return (
-      <BankingPreviewStep
-        invoiceData={invoiceData}
-        billFromData={billFromData}
-        billToData={billToData}
-        gstConfig={gstConfig}
-        shippingDetails={shippingDetails}
-        onBack={() => setCurrentStep(1)}
-      />
-    );
-  }
+ 
 
   // Show Edit Fields Modal (place before return)
   {itemColumns.map((col, idx) => (
@@ -276,6 +291,19 @@ if (invoiceData.attachments?.length) {
 ))}
 
   return (
+    <FormProvider {...methods}>
+
+        {currentStep === 2 ? (
+      <BankingPreviewStep
+        invoiceData={invoiceData}
+        billFromData={billFromData}
+        billToData={billToData}
+        gstConfig={gstConfig}
+        shippingDetails={shippingDetails}
+        onBack={() => setCurrentStep(1)}
+      />
+    ) : (
+      
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
@@ -460,6 +488,8 @@ if (invoiceData.attachments?.length) {
         billToState={billToData.state}
       />
     </div>
+     )}
+    </FormProvider>
   );
 };
 

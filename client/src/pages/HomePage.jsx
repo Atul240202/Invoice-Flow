@@ -7,12 +7,12 @@ import { ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-500 text-white flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-300 to-blue-300 text-white flex flex-col justify-center items-center p-4">
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-5xl font-bold mb-4 text-center"
+        className="text-5xl font-bold mb-4 text-center text-shadow-lg"
       >
         Invoice Management System
       </motion.h1>
