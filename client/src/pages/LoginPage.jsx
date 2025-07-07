@@ -13,7 +13,7 @@ export default function LoginPage() {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-600 to-blue-500 p-4 text-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-300 to-blue-300  p-4 text-white">
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-black">
         {isRegistering ? (
           <>
@@ -22,7 +22,7 @@ export default function LoginPage() {
             <p className="mt-4 text-center text-sm">
               Already have an account?{" "}
               <button
-                className="text-purple-600 hover:underline font-medium"
+                className="text-purple-400 hover:underline font-medium"
                 onClick={() => setIsRegistering(false)}
               >
                 Back to Login
@@ -36,7 +36,7 @@ export default function LoginPage() {
             <p className="mt-4 text-center text-sm">
               Don't have an account?{" "}
               <button
-                className="text-purple-600 hover:underline font-medium"
+                className="text-purple-400 hover:underline font-medium"
                 onClick={() => setIsRegistering(true)}
               >
                 Register

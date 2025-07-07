@@ -9,16 +9,20 @@ import { GSTConfigModal } from "../components/invoice/GSTConfigModal";
 import { ItemDetailsTable } from "../components/invoice/ItemDetailsTable";
 import { TotalsSection } from "../components/invoice/TotalsSection";
 import { ExtrasSection } from "../components/invoice/ExtrasSection";
-import { BankingPreviewStep } from "../components/invoice/BankingPreviewStep";
+import  BankingPreviewStep  from "../components/invoice/BankingPreviewStep";
 import { Input } from "../components/Input";
 import { Label } from "../components/Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/Select";
 import { Card, CardHeader, CardContent, CardTitle } from "../components/card";
 import { Plus, X } from "lucide-react";
 import { BillToSection } from "../components/invoice/BillToSection";
+import { useForm, FormProvider } from "react-hook-form";
+
 
 const CreateInvoice = () => {
   const { toast } = useToast();
+  // you can pass defaultValues if needed
+
   const [currentStep, setCurrentStep] = useState(1);
   const [showGSTModal, setShowGSTModal] = useState(false);
   const [showShippingDetails, setShowShippingDetails] = useState(false);
@@ -32,6 +36,29 @@ const CreateInvoice = () => {
     { key: "rate", label: "Rate", visible: true },
     { key: "amount", label: "Amount", visible: true },
   ]);
+   
+   const methods = useForm({
+    defaultValues: {
+      // all fields from all steps here
+      invoiceNumber: "",
+      date: "",
+      dueDate: "",
+      billFromData: { businessName: "", address: "", city: "", state: "", pincode: "", gstin: "", email: "" },
+      billToData: { businessName: "", address: "", city: "", state: "", pincode: "", gstin: "" },
+      items: [],
+      cgst: 0,
+      sgst: 0,
+      igst: 0,
+      discount: 0,
+      additionalCharges: 0,
+      terms: "",
+      notes: "",
+      signature: null,
+      attachments: [],
+      currency: "INR",
+    }
+  });
+
 
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: "A00001",
@@ -52,7 +79,8 @@ const CreateInvoice = () => {
     terms: "",
     notes: "",
     attachments: [],
-    contactDetails: ""
+    contactDetails: "",
+    qrImage: null
   });
 
   const [billFromData, setBillFromData] = useState({
@@ -105,10 +133,28 @@ const CreateInvoice = () => {
   });
 
   
-  
   const handleSaveAndContinue = () => {
-    setCurrentStep(2);
-  };
+  // Push local state into react-hook-form before continuing
+  methods.setValue("billFromData", billFromData);
+  methods.setValue("billToData", billToData);
+  methods.setValue("items", invoiceData.items);
+  methods.setValue("currency", invoiceData.currency);
+  methods.setValue("cgst", invoiceData.cgst);
+  methods.setValue("sgst", invoiceData.sgst);
+  methods.setValue("igst", invoiceData.igst);
+  methods.setValue("discount", invoiceData.discount);
+  methods.setValue("additionalCharges", invoiceData.additionalCharges);
+  methods.setValue("terms", invoiceData.terms);
+  methods.setValue("notes", invoiceData.notes);
+  methods.setValue("signature", invoiceData.signature);
+  methods.setValue("attachments", invoiceData.attachments);
+  methods.setValue("invoiceNumber", invoiceData.invoiceNumber);
+  methods.setValue("date", invoiceData.date);
+  methods.setValue("dueDate", invoiceData.dueDate);
+  methods.setValue("qrImage",  invoiceData.qrImage)
+
+  setCurrentStep(2);
+};
 
   const handleSaveDraft = () => {
     toast({
@@ -117,18 +163,7 @@ const CreateInvoice = () => {
     });
   };
 
-  if (currentStep === 2) {
-    return (
-      <BankingPreviewStep
-        invoiceData={invoiceData}
-        billFromData={billFromData}
-        billToData={billToData}
-        gstConfig={gstConfig}
-        shippingDetails={shippingDetails}
-        onBack={() => setCurrentStep(1)}
-      />
-    );
-  }
+ 
 
   // Show Edit Fields Modal (place before return)
   {itemColumns.map((col, idx) => (
@@ -168,6 +203,19 @@ const CreateInvoice = () => {
 ))}
 
   return (
+    <FormProvider {...methods}>
+
+        {currentStep === 2 ? (
+      <BankingPreviewStep
+        invoiceData={invoiceData}
+        billFromData={billFromData}
+        billToData={billToData}
+        gstConfig={gstConfig}
+        shippingDetails={shippingDetails}
+        onBack={() => setCurrentStep(1)}
+      />
+    ) : (
+      
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Header */}
@@ -349,6 +397,8 @@ const CreateInvoice = () => {
         billToState={billToData.state}
       />
     </div>
+     )}
+    </FormProvider>
   );
 };
 

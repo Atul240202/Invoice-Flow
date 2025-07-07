@@ -32,7 +32,7 @@ export function AppSidebar() {
     <Sidebar
       className={`
         fixed top-0 left-0 h-full z-40
-        border-r border-gray-200 bg-white shadow-lg transition-transform duration-300
+        border-r border-gray-200  bg-fuchsia-50 shadow-lg transition-transform duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         w-64
       `}

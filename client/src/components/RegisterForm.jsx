@@ -112,7 +112,7 @@ export default function RegisterForm() {
       )}
       <button
         type="submit"
-        className="bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-xl font-medium"
+        className="bg-purple-400 hover:bg-purple-700 text-white py-2 rounded-xl font-medium"
       >
         Register
       </button>
