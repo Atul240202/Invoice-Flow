@@ -30,5 +30,9 @@ app.use('/api/settings', settingsRoutes);
 const invoiceRoutes = require('./routes/invoiceRoutes');
 app.use('/api/invoices', invoiceRoutes);
 
+const clientRoutes = require("./routes/clientRoutes");
+app.use("/api/clients", clientRoutes);
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
