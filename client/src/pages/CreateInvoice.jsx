@@ -16,7 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardHeader, CardContent, CardTitle } from "../components/card";
 import { Plus, X } from "lucide-react";
 import { BillToSection } from "../components/invoice/BillToSection";
-import { useForm, FormProvider } from "react-hook-form";
+import api from "../utils/api";
+import { useEffect } from "react";
+import axios from "axios";
+import { exchangeRates, currencySymbols } from "../utils/currencyUtils";
 
 
 const CreateInvoice = () => {
@@ -83,6 +86,10 @@ const CreateInvoice = () => {
     qrImage: null
   });
 
+  const conversionRate = exchangeRates[invoiceData.currency] || 1;
+  const currencySymbol = currencySymbols[invoiceData.currency] || "₹";
+
+
   const [billFromData, setBillFromData] = useState({
     country: "India",
     businessName: "",
@@ -131,30 +138,111 @@ const CreateInvoice = () => {
       state: ""
     }
   });
-
   
-  const handleSaveAndContinue = () => {
-  // Push local state into react-hook-form before continuing
-  methods.setValue("billFromData", billFromData);
-  methods.setValue("billToData", billToData);
-  methods.setValue("items", invoiceData.items);
-  methods.setValue("currency", invoiceData.currency);
-  methods.setValue("cgst", invoiceData.cgst);
-  methods.setValue("sgst", invoiceData.sgst);
-  methods.setValue("igst", invoiceData.igst);
-  methods.setValue("discount", invoiceData.discount);
-  methods.setValue("additionalCharges", invoiceData.additionalCharges);
-  methods.setValue("terms", invoiceData.terms);
-  methods.setValue("notes", invoiceData.notes);
-  methods.setValue("signature", invoiceData.signature);
-  methods.setValue("attachments", invoiceData.attachments);
-  methods.setValue("invoiceNumber", invoiceData.invoiceNumber);
-  methods.setValue("date", invoiceData.date);
-  methods.setValue("dueDate", invoiceData.dueDate);
-  methods.setValue("qrImage",  invoiceData.qrImage)
+  useEffect(() => {
+  const fetchBillFromData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-  setCurrentStep(2);
+      if (res.data?.billFrom) {
+        setBillFromData(res.data.billFrom);
+      }
+    } catch (error) {
+      console.error("Failed to fetch bill-from data:", error);
+    }
+  };
+
+  fetchBillFromData();
+}, []);
+
+
+  // FIX 3: Remove hsn from newItem
+  const handleSaveAndContinue = async () => {
+  const formData = new FormData();
+
+  formData.append("invoiceNumber", invoiceData.invoiceNumber);
+  formData.append("invoiceDate", invoiceData.date);
+  formData.append("dueDate", invoiceData.dueDate);
+
+  if (invoiceData.businessLogo) {
+    formData.append("businessLogo", invoiceData.businessLogo);
+  }
+
+  if (invoiceData.qrImage) {
+  formData.append("qrImage", invoiceData.qrImage);
+}
+
+if (invoiceData.attachments?.length) {
+    invoiceData.attachments.forEach((file) => {
+      formData.append("attachments", file); 
+    });
+  }
+  
+  if (invoiceData.signature) {
+    formData.append("signature", invoiceData.signature);
+  }
+
+  formData.append("billFrom", JSON.stringify(billFromData));
+  formData.append("billTo", JSON.stringify(billToData));
+  formData.append("shipping", JSON.stringify(shippingDetails));
+  formData.append("gstConfig", JSON.stringify(gstConfig));
+  formData.append("items", JSON.stringify(invoiceData.items));
+  formData.append("summary", JSON.stringify({
+    subtotal: invoiceData.subtotal,
+    cgst: invoiceData.cgst,
+    sgst: invoiceData.sgst,
+    discount: invoiceData.discount,
+    totalAmount: invoiceData.grandTotal,
+  }));
+  formData.append("additionalOptions", JSON.stringify({
+    terms: invoiceData.terms,
+    notes: invoiceData.notes,
+    attachments: [], 
+    contactDetails: invoiceData.contactDetails,
+    additionalInfo: invoiceData.additionalInfo || "",
+  }));
+  formData.append("currency", invoiceData.currency);
+  formData.append("status", "draft");
+
+  try {
+    const token = localStorage.getItem("token"); 
+    console.log("Token:", token);
+
+    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const res = await api.post("/invoices", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    console.log("Invoice created:", res.data);
+    toast({
+      title: "Success",
+      description: "Invoice created successfully.",
+    });
+
+    setCurrentStep(2); 
+  } catch (error) {
+    console.error("Error creating invoice:", error);
+    toast({
+      title: "Error",
+      description: "Something went wrong while saving invoice.",
+      variant: "destructive",
+    });
+  }
 };
+
 
   const handleSaveDraft = () => {
     toast({
@@ -326,6 +414,8 @@ const CreateInvoice = () => {
               gstConfig={gstConfig}
               numberFormat={numberFormat}
               itemColumns={itemColumns}
+              conversionRate={conversionRate}
+              currencySymbol={currencySymbol}
             />
           </CardContent>
         </Card>
@@ -336,7 +426,8 @@ const CreateInvoice = () => {
           setInvoiceData={setInvoiceData}
           gstConfig={gstConfig}
           numberFormat={numberFormat}
-          
+          conversionRate={conversionRate}
+          currencySymbol={currencySymbol}
         />
 
         <ExtrasSection

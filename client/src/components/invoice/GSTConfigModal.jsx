@@ -32,9 +32,32 @@ export const GSTConfigModal = ({
     }
   }, [billFromState, billToState, gstConfig.taxType, setGstConfig]);
 
-  const handleSave = () => {
-    onClose();
-  };
+  const handleSave = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("http://localhost:5000/api/settings/gst-config", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(gstConfig),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Failed to save GST config:", data.message);
+    } else {
+      console.log("GST config saved:", data);
+      onClose();
+    }
+  } catch (error) {
+    console.error("Error saving GST config:", error);
+  }
+};
+
 
   const gstEnabled = gstConfig.taxType === "GST";
 

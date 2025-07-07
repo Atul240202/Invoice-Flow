@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { Input } from "../Input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
+import { useEffect } from "react";
 
 const indianStates = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
@@ -10,7 +11,43 @@ const indianStates = [
 ];
 
 export const ShippingDetails = ({ shippingDetails, setShippingDetails }) => {
-  if (!shippingDetails) return null; // Defensive: don't render if missing
+  if (!shippingDetails) return null;
+  
+  useEffect(() => {
+    const fetchShippingFrom = async () => {
+      console.log("Token:", localStorage.getItem("token"));
+
+      try {
+        const res = await fetch("http://localhost:5000/api/settings/shipped-from", {
+           method: "GET",
+           headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        });
+
+         if (!res.ok) {
+        const errText = await res.text();
+        console.error("Server returned:", errText);
+        return;
+      }
+
+        const data = await res.json();
+
+        if (data.shippingFrom) {
+          setShippingDetails(prev => ({
+            ...prev,
+            shippedFrom: data.shippedFrom,
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to fetch shippingFrom:", err);
+      }
+    };
+
+    fetchShippingFrom();
+  }, [setShippingDetails]);
 
   return (
     <Card className="bg-white border border-gray-200 rounded-lg mb-8">

@@ -35,7 +35,7 @@ exports.updateBusinessInfo = async (req, res) => {
         gstin,
         pan,
         businessType,
-        businessAddress: businessAddress,
+        businessAddress: address,
       },
       { new: true }
     ).select("businessName gstin pan businessType address");
@@ -89,3 +89,87 @@ exports.updateSecuritySettings = async (req, res) => {
     res.status(500).json({ message: "Failed to update security settings" });
   }
 };
+
+exports.getBillFrom = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('defaultBillFrom');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ billFrom: user.defaultBillFrom || {} });
+  } catch (error) {
+    console.error("Error fetching billFrom:", error);
+    res.status(500).json({ message: "Failed to fetch Bill From info" });
+  }
+};
+
+exports.saveBillFrom = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    user.defaultBillFrom = req.body;
+
+    await user.save();
+
+    res.status(200).json({ message: "Bill From info saved", billFrom: user.defaultBillFrom });
+  } catch (error) {
+    console.error("Error saving billFrom:", error);
+    res.status(500).json({ message: "Failed to save Bill From info" });
+  }
+};
+
+exports.getShippedFrom = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('defaultShippingFrom');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ shippedFrom: user.defaultShippingFrom || {} });
+  } catch (error) {
+    console.error("Error fetching shippedFrom:", error);
+    res.status(500).json({ message: "Failed to fetch shippedFrom info" });
+  }
+};
+
+exports.saveShippedFrom = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+
+    user.defaultShippingFrom = req.body;
+
+    await user.save();
+
+    res.status(200).json({ message: "Shipped From info saved", shippedFrom: user.defaultShippingFrom });
+  } catch (error) {
+    console.error("Error saving shippedFrom:", error);
+    res.status(500).json({ message: "Failed to save Shipped From info" });
+  }
+};
+
+
+exports.getGstConfig = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('gstConfig');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ gstConfig: user.gstConfig || {} });
+  } catch (err) {
+    console.error("Error fetching GST config:", err);
+    res.status(500).json({ message: "Failed to fetch GST config" });
+  }
+};
+
+exports.saveGstConfig = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.gstConfig = req.body;
+    await user.save();
+
+    res.status(200).json({ message: "GST config saved", gstConfig: user.gstConfig });
+  } catch (err) {
+    console.error("Error saving GST config:", err);
+    res.status(500).json({ message: "Failed to save GST config" });
+  }
+};
+
