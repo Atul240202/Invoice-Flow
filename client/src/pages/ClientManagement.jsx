@@ -183,6 +183,11 @@ const ClientManagement = () => {
   }
 };
 
+const deleteClient = (clientId) => {
+  setClients(prev => prev.filter(client => client.id !== clientId));
+};
+  
+
 
   const handleAddClient = (e) => {
   e.preventDefault();
