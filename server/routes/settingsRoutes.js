@@ -7,6 +7,12 @@ const {
   updateBusinessInfo,
   getBusinessInfo,
   updateSecuritySettings,
+  getBillFrom,
+  saveBillFrom,
+  getShippedFrom,
+  saveShippedFrom,
+  getGstConfig,
+  saveGstConfig,
 } = require('../controllers/settingsController');
 
 
@@ -19,5 +25,14 @@ router.put('/business', authMiddleware, updateBusinessInfo);
 router.get('/business', authMiddleware, getBusinessInfo);
 
 router.put('/security', authMiddleware, updateSecuritySettings);
+
+router.get('/bill-from', authMiddleware, getBillFrom);
+router.post('/bill-from', authMiddleware, saveBillFrom);
+
+router.get('/shipped-from', authMiddleware, getShippedFrom);
+router.post('/shipped-from', authMiddleware, saveShippedFrom);  
+
+router.get('/gst-config', authMiddleware, getGstConfig);
+router.post('/gst-config', authMiddleware, saveGstConfig);
 
 module.exports = router;

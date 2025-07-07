@@ -17,6 +17,10 @@ import { Card, CardHeader, CardContent, CardTitle } from "../components/card";
 import { Plus, X } from "lucide-react";
 import { BillToSection } from "../components/invoice/BillToSection";
 import api from "../utils/api";
+import { useEffect } from "react";
+import axios from "axios";
+import { exchangeRates, currencySymbols } from "../utils/currencyUtils";
+
 
 const CreateInvoice = () => {
   const { toast } = useToast();
@@ -55,6 +59,10 @@ const CreateInvoice = () => {
     attachments: [],
     contactDetails: ""
   });
+
+  const conversionRate = exchangeRates[invoiceData.currency] || 1;
+  const currencySymbol = currencySymbols[invoiceData.currency] || "₹";
+
 
   const [billFromData, setBillFromData] = useState({
     country: "India",
@@ -104,6 +112,27 @@ const CreateInvoice = () => {
       state: ""
     }
   });
+  
+  useEffect(() => {
+  const fetchBillFromData = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.data?.billFrom) {
+        setBillFromData(res.data.billFrom);
+      }
+    } catch (error) {
+      console.error("Failed to fetch bill-from data:", error);
+    }
+  };
+
+  fetchBillFromData();
+}, []);
 
 
   // FIX 3: Remove hsn from newItem
@@ -116,6 +145,20 @@ const CreateInvoice = () => {
 
   if (invoiceData.businessLogo) {
     formData.append("businessLogo", invoiceData.businessLogo);
+  }
+
+  if (invoiceData.qrImage) {
+  formData.append("qrImage", invoiceData.qrImage);
+}
+
+if (invoiceData.attachments?.length) {
+    invoiceData.attachments.forEach((file) => {
+      formData.append("attachments", file); 
+    });
+  }
+  
+  if (invoiceData.signature) {
+    formData.append("signature", invoiceData.signature);
   }
 
   formData.append("billFrom", JSON.stringify(billFromData));
@@ -135,12 +178,20 @@ const CreateInvoice = () => {
     notes: invoiceData.notes,
     attachments: [], 
     contactDetails: invoiceData.contactDetails,
+    additionalInfo: invoiceData.additionalInfo || "",
   }));
   formData.append("currency", invoiceData.currency);
   formData.append("status", "draft");
 
   try {
     const token = localStorage.getItem("token"); 
+    console.log("Token:", token);
+
+    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     const res = await api.post("/invoices", formData, {
       headers: {
@@ -335,6 +386,8 @@ const CreateInvoice = () => {
               gstConfig={gstConfig}
               numberFormat={numberFormat}
               itemColumns={itemColumns}
+              conversionRate={conversionRate}
+              currencySymbol={currencySymbol}
             />
           </CardContent>
         </Card>
@@ -345,7 +398,8 @@ const CreateInvoice = () => {
           setInvoiceData={setInvoiceData}
           gstConfig={gstConfig}
           numberFormat={numberFormat}
-          
+          conversionRate={conversionRate}
+          currencySymbol={currencySymbol}
         />
 
         <ExtrasSection

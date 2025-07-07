@@ -22,14 +22,27 @@ router.post(
   authMiddleware,
   upload.fields([
     { name: 'businessLogo', maxCount: 1 },
-    { name: 'attachments', maxCount: 5 }
+    { name: 'attachments', maxCount: 5 },
+    { name: "qrImage", maxCount: 1 },
+    { name: "signature", maxCount: 1 },
   ]),
   createInvoice
 );
 
 router.get('/', authMiddleware, getUserInvoices);
 router.get('/:id', authMiddleware, getSingleInvoice);
-router.put('/:id', authMiddleware, updateInvoice);
+router.put(
+  '/:id',
+  authMiddleware,
+  upload.fields([
+    { name: 'businessLogo', maxCount: 1 },
+    { name: 'attachments', maxCount: 5 },
+    { name: "qrImage", maxCount: 1 },
+    { name: "signature", maxCount: 1 },
+  ]),
+  updateInvoice
+);
+
 router.delete('/:id', authMiddleware, deleteInvoice);
 
 router.put("/:id/bank-details", authMiddleware, async (req, res) => {

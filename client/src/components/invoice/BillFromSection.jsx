@@ -1,248 +1,271 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { Input } from "../Input";
-import { Label } from "../Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 import { Button } from "../button";
 import { X } from "lucide-react";
+import axios from "axios";
 
 export const BillFromSection = ({ billFromData, setBillFromData }) => {
-  const indianStates = [
-    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
-    "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
-    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
-  ];
+  const indianStates = [/*... same as before ...*/];
 
-  // Show/hide states for optional fields
-  const [showEmail, setShowEmail] = useState(false);
-  const [showPhone, setShowPhone] = useState(false);
-  const [showGST, setShowGST] = useState(false);
-  const [showPAN, setShowPAN] = useState(false);
-  const [customFields, setCustomFields] = useState([]);
+  const [showEmail, setShowEmail] = useState(!!billFromData.email);
+  const [showPhone, setShowPhone] = useState(!!billFromData.phone);
+  const [showGST, setShowGST] = useState(!!billFromData.gstin);
+  const [showPAN, setShowPAN] = useState(!!billFromData.pan);
+  const [customFields, setCustomFields] = useState(billFromData.customFields || []);
 
-  const addCustomField = () => setCustomFields([...customFields, { label: "", value: "" }]);
-  const removeCustomField = (idx) => setCustomFields(customFields.filter((_, i) => i !== idx));
+  const [errors, setErrors] = useState({ email: "", phone: "", gstin: "", pan: "" });
+
+  const validateField = (field, value) => {
+    let error = "";
+    switch (field) {
+      case "email":
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Invalid email format";
+        break;
+      case "phone":
+        if (value && !/^\d{10}$/.test(value)) error = "Phone must be 10 digits";
+        break;
+      case "gstin":
+        if (value && value.length !== 15) error = "GSTIN must be 15 characters";
+        break;
+      case "pan":
+        if (value && !/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(value)) error = "Invalid PAN format";
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
+
+  useEffect(() => {
+    const fetchBillFrom = async () => {
+      try {
+        const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        if (res.data?.billFrom) {
+          setBillFromData(res.data.billFrom);
+          setCustomFields(res.data.billFrom.customFields || []);
+        }
+      } catch (err) {
+        console.error("Failed to fetch bill-from data", err);
+      }
+    };
+    fetchBillFrom();
+  }, [setBillFromData]);
+
+  const handleCustomFieldChange = (index, field, value) => {
+    const updated = [...customFields];
+    updated[index][field] = value;
+    setCustomFields(updated);
+    setBillFromData(prev => ({ ...prev, customFields: updated }));
+  };
+
+  const addCustomField = () => {
+    const updated = [...customFields, { label: "", value: "" }];
+    setCustomFields(updated);
+    setBillFromData(prev => ({ ...prev, customFields: updated }));
+  };
+
+  const removeCustomField = (idx) => {
+    const updated = customFields.filter((_, i) => i !== idx);
+    setCustomFields(updated);
+    setBillFromData(prev => ({ ...prev, customFields: updated }));
+  };
 
   return (
-    <>
-      <Card className="bg-white border border-gray-200 rounded-lg">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-medium text-black">
-            Billed By <span className="text-gray-500 text-sm font-normal">(Your Details)</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Select value={billFromData.country} onValueChange={(value) => setBillFromData(prev => ({ ...prev, country: value }))}>
-              <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
-                <SelectValue placeholder="India" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="India">India</SelectItem>
-                <SelectItem value="USA">USA</SelectItem>
-                <SelectItem value="UK">UK</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <Card className="bg-white border border-gray-200 rounded-lg">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg font-medium text-black">
+          Billed By <span className="text-gray-500 text-sm font-normal">(Your Details)</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <Select
+          value={billFromData.country}
+          onValueChange={val => setBillFromData(prev => ({ ...prev, country: val }))}
+        >
+          <SelectTrigger className="h-10 border-gray-300">
+            <SelectValue placeholder="Select Country" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="India">India</SelectItem>
+            <SelectItem value="USA">USA</SelectItem>
+            <SelectItem value="UK">UK</SelectItem>
+          </SelectContent>
+        </Select>
 
-          <div className="space-y-2">
-            <Input
-              value={billFromData.businessName}
-              onChange={(e) => setBillFromData(prev => ({ ...prev, businessName: e.target.value }))}
-              className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="Your Business / Freelancer Name (Required)"
-            />
-          </div>
+        <Input
+          value={billFromData.businessName}
+          onChange={e => setBillFromData(prev => ({ ...prev, businessName: e.target.value }))}
+          placeholder="Your Business / Freelancer Name (Required)"
+        />
 
-          <div className="space-y-2">
-            <Input
-              value={billFromData.address}
-              onChange={(e) => setBillFromData(prev => ({ ...prev, address: e.target.value }))}
-              className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="Address (optional)"
-            />
-          </div>
+        <Input
+          value={billFromData.address}
+          onChange={e => setBillFromData(prev => ({ ...prev, address: e.target.value }))}
+          placeholder="Address (optional)"
+        />
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              value={billFromData.city}
-              onChange={(e) => setBillFromData(prev => ({ ...prev, city: e.target.value }))}
-              className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="City (optional)"
-            />
-            <Input
-              value={billFromData.pincode}
-              onChange={(e) => setBillFromData(prev => ({ ...prev, pincode: e.target.value }))}
-              className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="Postal Code / Zip Code"
-            />
-          </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Input
+            value={billFromData.city}
+            onChange={e => setBillFromData(prev => ({ ...prev, city: e.target.value }))}
+            placeholder="City (optional)"
+          />
+          <Input
+            value={billFromData.pincode}
+            onChange={e => setBillFromData(prev => ({ ...prev, pincode: e.target.value }))}
+            placeholder="Postal Code / Zip Code"
+          />
+        </div>
 
-          <div className="space-y-2">
-            <Select value={billFromData.state} onValueChange={(value) => setBillFromData(prev => ({ ...prev, state: value }))}>
-              <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
-                <SelectValue placeholder="State (optional)" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                {indianStates.map((state) => (
-                  <SelectItem key={state} value={state}>{state}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <Select
+          value={billFromData.state || ""} 
+          onValueChange={(val) => setBillFromData(prev => ({ ...prev, state: val }))}
+        >
+          <SelectTrigger className="h-10 border-gray-300">
+            <SelectValue placeholder="Select State" />
+          </SelectTrigger>
+          <SelectContent>
+            {indianStates.map(state => (
+              <SelectItem key={state} value={state}>{state}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          {/* Add Email */}
-          {!showEmail ? (
-            <Button variant="outline" className="text-blue-600 border-blue-200" onClick={() => setShowEmail(true)}>
-              📧 Add Email
-            </Button>
-          ) : (
+        {/* Optional Fields with Validation */}
+        {showEmail ? (
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
                 value={billFromData.email}
-                onChange={e => setBillFromData(prev => ({ ...prev, email: e.target.value }))}
-                className="h-10 border-gray-300 focus:border-blue-500"
-                placeholder="Email"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowEmail(false);
-                  setBillFromData(prev => ({ ...prev, email: "" }));
+                onChange={e => {
+                  const val = e.target.value;
+                  setBillFromData(prev => ({ ...prev, email: val }));
+                  validateField("email", val);
                 }}
-                className="text-red-500"
-                title="Remove Email"
-              >
-                <X className="w-4 h-4" />
+                placeholder="Email"
+                className={errors.email ? "border-red-500" : ""}
+              />
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowEmail(false);
+                setBillFromData(prev => ({ ...prev, email: "" }));
+                setErrors(prev => ({ ...prev, email: "" }));
+              }}>
+                <X className="w-4 h-4 text-red-500" />
               </Button>
             </div>
-          )}
+            {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => setShowEmail(true)}>📧 Add Email</Button>
+        )}
 
-          {/* Add Phone Number */}
-          {!showPhone ? (
-            <Button variant="outline" className="text-blue-600 border-blue-200" onClick={() => setShowPhone(true)}>
-              📞 Add Phone Number
-            </Button>
-          ) : (
+        {showPhone ? (
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
                 value={billFromData.phone}
-                onChange={e => setBillFromData(prev => ({ ...prev, phone: e.target.value }))}
-                className="h-10 border-gray-300 focus:border-blue-500"
-                placeholder="Phone Number"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowPhone(false);
-                  setBillFromData(prev => ({ ...prev, phone: "" }));
+                onChange={e => {
+                  const val = e.target.value;
+                  setBillFromData(prev => ({ ...prev, phone: val }));
+                  validateField("phone", val);
                 }}
-                className="text-red-500"
-                title="Remove Phone"
-              >
-                   <X className="w-4 h-4" />
+                placeholder="Phone Number"
+                className={errors.phone ? "border-red-500" : ""}
+              />
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowPhone(false);
+                setBillFromData(prev => ({ ...prev, phone: "" }));
+                setErrors(prev => ({ ...prev, phone: "" }));
+              }}>
+                <X className="w-4 h-4 text-red-500" />
               </Button>
             </div>
-          )}
+            {errors.phone && <span className="text-xs text-red-500">{errors.phone}</span>}
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => setShowPhone(true)}>📞 Add Phone Number</Button>
+        )}
 
-          {/* Add GST */}
-          {!showGST ? (
-            <Button variant="outline" className="text-blue-600 border-blue-200" onClick={() => setShowGST(true)}>
-              🏛️ Add GST
-            </Button>
-          ) : (
+        {showGST ? (
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
                 value={billFromData.gstin}
-                onChange={e => setBillFromData(prev => ({ ...prev, gstin: e.target.value }))}
-                className="h-10 border-gray-300 focus:border-blue-500"
-                placeholder="GSTIN"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowGST(false);
-                  setBillFromData(prev => ({ ...prev, gstin: "" }));
+                onChange={e => {
+                  const val = e.target.value;
+                  setBillFromData(prev => ({ ...prev, gstin: val }));
+                  validateField("gstin", val);
                 }}
-                className="text-red-500"
-                title="Remove GST"
-              >
-                 <X className="w-4 h-4" />
+                placeholder="GSTIN"
+                className={errors.gstin ? "border-red-500" : ""}
+              />
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowGST(false);
+                setBillFromData(prev => ({ ...prev, gstin: "" }));
+                setErrors(prev => ({ ...prev, gstin: "" }));
+              }}>
+                <X className="w-4 h-4 text-red-500" />
               </Button>
             </div>
-          )}
+            {errors.gstin && <span className="text-xs text-red-500">{errors.gstin}</span>}
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => setShowGST(true)}>🏛️ Add GST</Button>
+        )}
 
-          {/* Add PAN */}
-          {!showPAN ? (
-            <Button variant="outline" className="text-blue-600 border-blue-200" onClick={() => setShowPAN(true)}>
-              📋 Add PAN
-            </Button>
-          ) : (
+        {showPAN ? (
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
                 value={billFromData.pan}
-                onChange={e => setBillFromData(prev => ({ ...prev, pan: e.target.value }))}
-                className="h-10 border-gray-300 focus:border-blue-500"
+                onChange={e => {
+                  const val = e.target.value.toUpperCase();
+                  setBillFromData(prev => ({ ...prev, pan: val }));
+                  validateField("pan", val);
+                }}
                 placeholder="PAN"
+                className={errors.pan ? "border-red-500" : ""}
               />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowPAN(false);
-                  setBillFromData(prev => ({ ...prev, pan: "" }));
-                }}
-                className="text-red-500"
-                title="Remove PAN"
-              >
-                  <X className="w-4 h-4" />
+              <Button variant="ghost" size="sm" onClick={() => {
+                setShowPAN(false);
+                setBillFromData(prev => ({ ...prev, pan: "" }));
+                setErrors(prev => ({ ...prev, pan: "" }));
+              }}>
+                <X className="w-4 h-4 text-red-500" />
               </Button>
             </div>
-          )}
+            {errors.pan && <span className="text-xs text-red-500">{errors.pan}</span>}
+          </div>
+        ) : (
+          <Button variant="outline" onClick={() => setShowPAN(true)}>📋 Add PAN</Button>
+        )}
 
-          {/* Custom Fields */}
-          {customFields.map((field, idx) => (
-            <div key={idx} className="flex gap-2 items-center">
-              <Input
-                value={field.label}
-                onChange={e => {
-                  const updated = [...customFields];
-                  updated[idx].label = e.target.value;
-                  setCustomFields(updated);
-                }}
-                className="h-10 border-gray-300 focus:border-blue-500"
-                placeholder="Custom Field Label"
-              />
-              <Input
-                value={field.value}
-                onChange={e => {
-                  const updated = [...customFields];
-                  updated[idx].value = e.target.value;
-                  setCustomFields(updated);
-                }}
-                className="h-10 border-gray-300 focus:border-blue-500"
-                placeholder="Custom Field Value"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeCustomField(idx)}
-                className="text-red-500"
-                title="Remove Custom Field"
-              >
-                  <X className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button variant="outline" className="text-blue-600 border-blue-200" onClick={addCustomField}>
-            ➕ Add Custom Field
-          </Button>
-        </CardContent>
-      </Card>
-    </>
+        {/* Custom Fields */}
+        {customFields.map((field, idx) => (
+          <div key={idx} className="flex items-center gap-2">
+            <Input
+              value={field.label}
+              onChange={e => handleCustomFieldChange(idx, "label", e.target.value)}
+              placeholder="Custom Field Label"
+            />
+            <Input
+              value={field.value}
+              onChange={e => handleCustomFieldChange(idx, "value", e.target.value)}
+              placeholder="Custom Field Value"
+            />
+            <Button variant="ghost" size="sm" onClick={() => removeCustomField(idx)}>
+              <X className="w-4 h-4 text-red-500" />
+            </Button>
+          </div>
+        ))}
+        <Button variant="outline" onClick={addCustomField}>
+          ➕ Add Custom Field
+        </Button>
+      </CardContent>
+    </Card>
   );
 };

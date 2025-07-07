@@ -33,14 +33,22 @@ function numberToWords(num) {
   return result + ' Only';
 }
 
-export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig }) => {
+// Currency utilities (pass from props or import if external)
+const currencySymbols = {
+  INR: "₹",
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+};
+
+export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig, conversionRate = 1, currencySymbol = "₹" }) => {
   const [showInWords, setShowInWords] = useState(false);
   const [qrImage, setQrImage] = useState(null);
   const fileInputRef = useRef(null);
 
-  const subtotal = Number(invoiceData.subtotal) || 0;
+  const subtotal = (Number(invoiceData.subtotal) || 0) * conversionRate;
   const discountPercentage = Number(invoiceData.discountPercentage) || 0;
-  const additionalCharges = Number(invoiceData.additionalCharges) || 0;
+  const additionalCharges = (Number(invoiceData.additionalCharges) || 0) * conversionRate;
 
   const discountAmount = (subtotal * discountPercentage) / 100;
   const taxableAmount = subtotal - discountAmount + additionalCharges;
@@ -60,6 +68,10 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig }) => {
     if (file && file.type.startsWith("image/")) {
       const reader = new FileReader();
       reader.onloadend = () => setQrImage(reader.result);
+      setInvoiceData(prev => ({
+        ...prev,
+        qrImage: file 
+      }));
       reader.readAsDataURL(file);
     } else {
       alert("Please upload a valid image file.");
@@ -74,7 +86,7 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig }) => {
     <Card className="bg-white border border-gray-200 rounded-lg">
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Left side: QR Upload */}
+          {/* QR Upload */}
           <div className="w-full md:w-1/3 flex flex-col items-center justify-start">
             <Label className="text-sm text-gray-700 mb-2">Upload QR Code</Label>
             <div
@@ -100,34 +112,34 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig }) => {
             </div>
           </div>
 
-          {/* Right side: Totals, Discounts, etc */}
+          {/* Totals */}
           <div className="w-full md:w-2/3 space-y-4">
             <div className="text-right space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-semibold">₹{subtotal.toFixed(2)}</span>
+                <span className="font-semibold">{currencySymbol}{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Discount ({discountPercentage}%)</span>
-                <span className="font-semibold text-red-600">- ₹{discountAmount.toFixed(2)}</span>
+                <span className="font-semibold text-red-600">- {currencySymbol}{discountAmount.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Additional Charges</span>
-                <span className="font-semibold text-green-700">+ ₹{additionalCharges.toFixed(2)}</span>
+                <span className="font-semibold text-green-700">+ {currencySymbol}{additionalCharges.toFixed(2)}</span>
               </div>
               <div className="flex justify-between items-center border-t pt-2">
                 <span className="text-gray-700 font-medium">Taxable Amount</span>
-                <span className="font-semibold">₹{taxableAmount.toFixed(2)}</span>
+                <span className="font-semibold">{currencySymbol}{taxableAmount.toFixed(2)}</span>
               </div>
               {gstConfig?.taxType === "GST" && (
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700 font-medium">{gstLabel}</span>
-                  <span className="font-semibold text-blue-700">+ ₹{gstAmount.toFixed(2)}</span>
+                  <span className="font-semibold text-blue-700">+ {currencySymbol}{gstAmount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center border-t pt-2">
                 <span className="text-gray-900 text-lg font-bold">Grand Total</span>
-                <span className="text-2xl font-bold text-blue-900">₹{grandTotal.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-blue-900">{currencySymbol}{grandTotal.toFixed(2)}</span>
               </div>
 
               {showInWords && (
@@ -175,28 +187,25 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig }) => {
               </div>
             </div>
 
-           <div className="flex justify-end gap-8 pt-4">
-  {/* Show Total In Words */}
-  <div className="flex items-center gap-2">
-    <Checkbox
-      id="show-total-words"
-      checked={showInWords}
-      onCheckedChange={(checked) => setShowInWords(!!checked)}
-    />
-    <Label htmlFor="show-total-words" className="text-sm text-blue-600">
-      Show Total In Words
-    </Label>
-  </div>
+            <div className="flex justify-end gap-8 pt-4">
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="show-total-words"
+                  checked={showInWords}
+                  onCheckedChange={(checked) => setShowInWords(!!checked)}
+                />
+                <Label htmlFor="show-total-words" className="text-sm text-blue-600">
+                  Show Total In Words
+                </Label>
+              </div>
 
-  {/* Add More Fields */}
-  <div className="flex items-center gap-2">
-    <Checkbox id="add-more-fields" />
-    <Label htmlFor="add-more-fields" className="text-sm text-blue-600">
-      Add More Fields
-    </Label>
-  </div>
-</div>
-
+              <div className="flex items-center gap-2">
+                <Checkbox id="add-more-fields" />
+                <Label htmlFor="add-more-fields" className="text-sm text-blue-600">
+                  Add More Fields
+                </Label>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

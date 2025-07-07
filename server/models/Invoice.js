@@ -2,13 +2,13 @@ const mongoose = require("mongoose");
 
 const itemSchema = new mongoose.Schema({
   item: String,
-  hsn: String,
   gstRate: Number,
   quantity: Number,
   rate: Number,
   amount: Number,
   cgst: Number,
   sgst: Number,
+  igst: Number,
   total: Number
 });
 
@@ -27,21 +27,33 @@ const invoiceSchema = new mongoose.Schema({
     businessLogo: String,
     billFrom: {
         country: String, businessName: String, phone: String,
-        gst: String, address: String, city: String, pincode: String,
-        state: String, email: String, pan: String
+        gstin: String, address: String, city: String, pincode: String,
+        state: String, email: String, pan: String,
+        customFields: [
+      {
+        label: String,
+        value: String
+      }
+    ]
     },
     billTo: {
         country: String, businessName: String, phone: String,
-        gst: String, address: String, city: String, pincode: String,
-        state: String, email: String, pan: String
+        gstin: String, address: String, city: String, pincode: String,
+        state: String, email: String, pan: String,
+        customFields: [
+    {
+      label: String,
+      value: String
+    }
+   ]
     },
     shipping: {
         shippedFrom: {
-            name: String, country: String, address: String,
+            businessName: String, country: String, address: String,
             city: String, state: String
         },
         shippedTo: {
-            name: String, country: String, address: String,
+            businessName: String, country: String, address: String,
             city: String, state: String
         }
     },
@@ -64,7 +76,9 @@ const invoiceSchema = new mongoose.Schema({
         terms: String,
         notes: String,
         attachments: [String],
-        contactDetails: String
+        contactDetails: String,
+        qrImage: String,
+        additionalInfo: String
     },
     status: {
         type: String,

@@ -42,6 +42,38 @@ const userSchema = new mongoose.Schema({
     },
     twoFactorCode: String,
     twoFactorExpires: Date,
+    defaultShippingFrom: {
+       businessName: String,
+       address: String,
+       city: String,
+       state: String,
+       country: String,
+    },
+    defaultBillFrom: {
+      country: String,
+      businessName: String,
+      address: String,
+      city: String,
+      pincode: String,
+      state: String,
+      phone: String,
+      email: String,
+      pan: String,
+      gstin: String,
+      customFields: [
+      {
+        label: String,
+        value: String
+       }
+       ]
+    },
+    gstConfig: {
+       taxType: { type: String, enum: ['GST', 'None'], default: 'None' },
+       placeOfSupply: { type: String },
+       gstType: { type: String, enum: ['CGST+SGST', 'IGST'], default: '' },
+       gstin: { type: String },
+       pan: { type: String },
+    },
 }, {timestamps: true });
 
 userSchema.pre('save', async function (next){

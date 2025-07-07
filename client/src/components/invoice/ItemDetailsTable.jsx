@@ -17,6 +17,8 @@ export const ItemDetailsTable = ({
   setInvoiceData,
   gstConfig,
   numberFormat = "indian",
+  conversionRate = 1,
+  currencySymbol = "₹",
 }) => {
   const addNewItem = () => {
     const newItem = {
@@ -94,6 +96,13 @@ export const ItemDetailsTable = ({
         sgst,
         igst,
         grandTotal,
+        summary: {
+          subtotal,
+          cgst,
+          sgst,
+          discount: prev.discount || 0,
+          totalAmount: grandTotal,
+        },
       };
     });
   };
@@ -119,9 +128,7 @@ export const ItemDetailsTable = ({
                 <div className="flex-1 px-4 py-2 border-r">
                   <Input
                     value={item.item}
-                    onChange={(e) =>
-                      updateItem(index, "item", e.target.value)
-                    }
+                    onChange={(e) => updateItem(index, "item", e.target.value)}
                     className="h-8"
                     placeholder="Item name"
                   />
@@ -139,7 +146,7 @@ export const ItemDetailsTable = ({
                 <div className="flex-1 px-4 py-2 border-r">
                   <div className="flex items-center">
                     <span className="px-2 h-10 flex items-center bg-gray-100 border border-r-0 rounded-l text-sm text-gray-500">
-                      ₹
+                      {currencySymbol}
                     </span>
                     <Input
                       type="number"
@@ -162,7 +169,8 @@ export const ItemDetailsTable = ({
                   />
                 </div>
                 <div className="flex-1 px-4 py-2 text-sm font-medium text-gray-700">
-                  ₹{formatNumber(item.amount, numberFormat)}
+                  {currencySymbol}
+                  {formatNumber(item.amount, numberFormat)}
                 </div>
                 <div className="w-8 flex items-center justify-center">
                   {invoiceData.items.length > 1 && (
