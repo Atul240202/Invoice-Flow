@@ -139,6 +139,18 @@ const CreateInvoice = () => {
       state: ""
     }
   });
+
+ /* useEffect(() => {
+  const invoiceId = params.invoiceId;
+  if (invoiceId) {
+    axios.get(`/api/invoices/${invoiceId}`).then((res) => {
+      const data = res.data;
+      setInvoiceData(data);
+      reset(data); // assuming react-hook-form
+    });
+  }
+}, []);*/
+
   
   useEffect(() => {
   const fetchBillFromData = async () => {
