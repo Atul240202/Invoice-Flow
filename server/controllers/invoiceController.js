@@ -1,4 +1,5 @@
 const Invoice = require("../models/Invoice");
+const Client = require("../models/Client");
 
 //create invoice
 exports.createInvoice = async (req, res) => {
@@ -16,10 +17,13 @@ exports.createInvoice = async (req, res) => {
       summary,
       additionalOptions,
       status,
+      billToDetail,
+      saveAsClient,
     } = req.body;
 
     const invoice = new Invoice({
       user: req.user._id,
+      billToDetail: billToDetail,
       invoiceNumber,
       invoiceDate,
       dueDate,
@@ -41,6 +45,29 @@ exports.createInvoice = async (req, res) => {
     });
 
     await invoice.save();
+  /*
+    if (saveAsClient === 'true' && parsedBillTo?.email) {
+  const existingClient = await Client.findOne({
+    email: parsedBillTo.email,
+    user: req.user._id,
+  });
+
+  if (!existingClient) {
+    const fullAddress = `${parsedBillTo.address || ""}, ${parsedBillTo.city || ""}, ${parsedBillTo.state || ""} - ${parsedBillTo.pincode || ""}`;
+
+    await Client.create({
+      user: req.user._id,
+      name: parsedBillTo.businessName || "",
+      email: parsedBillTo.email,
+      phone: parsedBillTo.phone || "",
+      address: fullAddress.trim(),
+      gstNumber: parsedBillTo.gstin || "",
+      company: parsedBillTo.businessName || "", 
+      status: "Active", 
+    });
+  }
+} */
+
     res.status(201).json({ message: "Invoice created", invoice });
   } catch (error) {
     console.error("Error creating invoice:", error.message);

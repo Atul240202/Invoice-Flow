@@ -21,10 +21,13 @@ import { useEffect } from "react";
 import axios from "axios";
 import { exchangeRates, currencySymbols } from "../utils/currencyUtils";
 import { useForm, FormProvider } from "react-hook-form";
+import { useLocation } from 'react-router-dom';
 
 
 const CreateInvoice = () => {
   const { toast } = useToast();
+  const location = useLocation();
+  const clientFromState = location.state?.client;
   // you can pass defaultValues if needed
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -84,7 +87,8 @@ const CreateInvoice = () => {
     notes: "",
     attachments: [],
     contactDetails: "",
-    qrImage: null
+    qrImage: null,
+    saveAsClient: false,
   });
 
   const conversionRate = exchangeRates[invoiceData.currency] || 1;
@@ -159,6 +163,18 @@ const CreateInvoice = () => {
   };
 
   fetchBillFromData();
+
+  if (clientFromState) {
+    setBillToData((prev) => ({
+      ...prev,
+      businessName: clientFromState.name || "",
+      email: clientFromState.email || "",
+      gstin: clientFromState.gstNumber || "",
+      address: clientFromState.address || "",
+      phone: clientFromState.phone || "",
+      // Add more if needed
+    }));
+  }
 }, []);
 
 
@@ -209,6 +225,7 @@ if (invoiceData.attachments?.length) {
   }));
   formData.append("currency", invoiceData.currency);
   formData.append("status", "draft");
+  formData.append("saveAsClient", invoiceData.saveAsClient);
 
   try {
     const token = localStorage.getItem("token"); 
@@ -338,8 +355,24 @@ if (invoiceData.attachments?.length) {
             billToData={billToData}
             setBillToData={setBillToData}
           />
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="saveAsClient"
+              checked={invoiceData.saveAsClient || false}
+              onChange={(e) =>
+                setInvoiceData((prev) => ({
+                ...prev,
+                saveAsClient: e.target.checked,
+                }))
+              }
+              className="rounded border-gray-300"
+            />
+            <label htmlFor="saveAsClient" className="text-sm text-gray-700">
+            Save this as a new client
+            </label>
+          </div>
         </div>
-
 
         {/* Action Buttons Row */}
         <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg border shadow-sm">

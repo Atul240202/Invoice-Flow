@@ -4,6 +4,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const {
   syncClientsFromInvoices,
   getClients,
+  getClientById,
   createClient,
   updateClient,
   deleteClient,
@@ -12,13 +13,14 @@ const {
 
 router.use(authMiddleware);
 
+// For syncing from invoices
+router.post("/sync-from-invoices", syncClientsFromInvoices);
+
 router.get("/", getClients);
+router.get("/:id", getClientById);
 router.post("/", createClient);
 router.put("/:id", updateClient);
 router.delete("/:id", deleteClient);
-router.patch("/:id/status", toggleClientStatus);
-
-// For syncing from invoices
-router.post("/sync-from-invoices", syncClientsFromInvoices);
+router.patch("/:id/toggle", toggleClientStatus);
 
 module.exports = router;
