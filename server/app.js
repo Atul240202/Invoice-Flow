@@ -3,6 +3,10 @@ const dotenv = require('dotenv');
 const connectDB = require("./config/db");
 const cors = require("cors");
 const path = require("path");
+const bodyParser = require('body-parser');
+const puppeteer = require('puppeteer');
+const generateInvoiceHTML = require('./invoiceTemplate');
+const fs = require('fs');
 
 dotenv.config();
 
@@ -15,6 +19,7 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/pdfs', express.static(path.join(__dirname, 'public/pdfs')));
 
 connectDB();
 
