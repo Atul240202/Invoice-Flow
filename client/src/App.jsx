@@ -10,6 +10,8 @@ import DashBoard from './pages/DashBoard';
 import CreateInvoice from './pages/CreateInvoice';
 import ClientManagement from './pages/ClientManagement';
 import AddEditClient from './pages/EditClient';
+import InvoiceHistory from './pages/ClientHistory';
+import BankingPreviewStep from './components/invoice/BankingPreviewStep';
 // You can import other pages like Reports, Clients, etc., as needed.
 
 function App() {
@@ -22,16 +24,18 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
 
-        {/* Dashboard Routes with Layout */}
         <Route path="/" element={<DashboardLayout />}>
-          <Route path="/dashboard" element={<DashBoard />} />
-          <Route path="/settings"  element={<SettingsPage />} />
-          <Route path="/create-invoice" element={<CreateInvoice />} />
-          <Route path="/clients" element={<ClientManagement />} />
-          <Route path="clients/new" element={<AddEditClient />} />
-          <Route path="clients/:id/edit" element={<AddEditClient />} />
-          {/* Add more nested routes here */}
-        </Route>
+  <Route path="dashboard" element={<DashBoard />} />
+  <Route path="create-invoice" element={<CreateInvoice />} />
+  <Route path="create-invoice/:id/edit" element={<CreateInvoice />} />
+  <Route path="clients" element={<ClientManagement />} />
+  <Route path="clients/new" element={<AddEditClient />} />
+  <Route path="clients/:id/edit" element={<AddEditClient />} />
+  <Route path="invoices" element={<InvoiceHistory />} />
+  <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
+</Route>
+
+
       </Routes>
     </Router>
   );
