@@ -60,6 +60,33 @@ const BankingPreviewStep = ({ invoiceData,billFromData,billToData }) => {
     window.print();
   };
 
+  const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+  });
+
+
+
+  const handleLogoUpload = (event) => {
+  const file = event.target.files[0];
+
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    // Save base64 string to invoiceData
+    setInvoiceData(prev => ({
+      ...prev,
+      businessLogo: reader.result, // e.g., "data:image/png;base64,AAAA..."
+    }));
+  };
+
+  if (file) {
+    reader.readAsDataURL(file);
+  }
+};
+
   
   
 const downloadPDF = async () => {
@@ -73,8 +100,10 @@ const downloadPDF = async () => {
       billToData,
     };
 
+    
+
     const response = await axios.post('http://localhost:5000/generate-pdf', payload, {
-      responseType: 'blob', // important!
+      responseType: 'blob', 
     });
 
     const blob = new Blob([response.data], { type: 'application/pdf' });
@@ -123,11 +152,19 @@ const downloadPDF = async () => {
   {/* Logo */}
   {invoiceData.businessLogo && (
     <div className="mt-6 md:mt-0">
-      <img
-        src={URL.createObjectURL(invoiceData.businessLogo)}
-        alt="Business Logo"
-        className="h-20 w-auto rounded-md shadow-sm border"
-      />
+     {invoiceData.businessLogo && (
+  <>
+    <p className="text-xs text-green-600 mt-2">
+      {invoiceData.businessLogoFile?.name}
+    </p>
+    <img
+      src={invoiceData.businessLogo}
+      alt="Business Logo"
+      className="mt-3 h-16 w-auto mx-auto rounded shadow-sm border"
+    />
+  </>
+)}
+
     </div>
   )}
 </div>
