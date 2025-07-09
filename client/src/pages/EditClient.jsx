@@ -1,5 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import api from '../utils/api'; 
+
 
 const AddEditClient = () => {
   const { id } = useParams();
@@ -20,9 +22,17 @@ const AddEditClient = () => {
     if (isEditing) {
       const fetchClient = async () => {
         try {
-          const response = await fetch(`/api/clients/${id}`);
-          const data = await response.json();
-          setClientData(data);
+          const response = await api.get(`/clients/${id}`);
+          const data = response.data;
+          setClientData({
+          name: data.name || '',
+          email: data.email || '',
+          company: data.company || '',
+          industry: data.industry || '',
+          phone: data.phone || '',
+          gstNumber: data.gstNumber || '',
+          address: data.address || '',
+        });
         } catch (err) {
           console.error('Failed to fetch client', err);
         }
@@ -37,22 +47,20 @@ const AddEditClient = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const url = isEditing ? `/api/clients/${id}` : '/api/clients';
-      const method = isEditing ? 'PUT' : 'POST';
+  e.preventDefault();
 
-      await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(clientData),
-      });
-
-      navigate('/clients');
-    } catch (error) {
-      console.error('Error saving client:', error);
+  try {
+    if (isEditing) {
+      await api.put(`/clients/${id}`, clientData);
+    } else {
+      await api.post('/clients', clientData);
     }
-  };
+
+    navigate('/clients');
+  } catch (error) {
+    console.error('Error saving client:', error);
+  }
+};
 
   return (
     <div className="max-w-3xl mx-auto p-6">

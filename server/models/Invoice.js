@@ -47,6 +47,11 @@ const invoiceSchema = new mongoose.Schema({
     }
    ]
     },
+    billToDetail: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Client",
+      required: true
+    },
     shipping: {
         shippedFrom: {
             businessName: String, country: String, address: String,

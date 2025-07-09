@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { Input } from "../Input";
 import { Label } from "../Label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../Select";
 import { Button } from "../button";
 import { X } from "lucide-react";
+import api from "../../utils/api";
 
 export const BillToSection = ({ billToData, setBillToData }) => {
   const indianStates = [
@@ -20,9 +21,44 @@ export const BillToSection = ({ billToData, setBillToData }) => {
   const [showGST, setShowGST] = useState(false);
   const [showPAN, setShowPAN] = useState(false);
   const [customFields, setCustomFields] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [selectedClientId, setSelectedClientId] = useState("");
+
 
   const addCustomField = () => setCustomFields([...customFields, { label: "", value: "" }]);
   const removeCustomField = (idx) => setCustomFields(customFields.filter((_, i) => i !== idx));
+
+  useEffect(() => {
+  const fetchClients = async () => {
+    try {
+      const res = await api.get("/clients");
+      setClients(res.data);
+    } catch (error) {
+      console.error("Failed to fetch clients:", error);
+    }
+  };
+
+  fetchClients();
+}, []);
+
+const handleClientSelect = (id) => {
+  setSelectedClientId(id);
+  const selected = clients.find((client) => client._id === id);
+  if (selected) {
+    setBillToData((prev) => ({
+      ...prev,
+      businessName: selected.name || "",
+      address: selected.address || "",
+      email: selected.email || "",
+      phone: selected.phone || "",
+      gstin: selected.gstNumber || "",
+      state: "", 
+      city: "", 
+      pincode: "", 
+    }));
+  }
+};
+
 
   return (
     <>
@@ -34,6 +70,21 @@ export const BillToSection = ({ billToData, setBillToData }) => {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
+            <div className="space-y-2">
+              <Label className="text-sm text-gray-700">Select Saved Client</Label>
+              <Select value={selectedClientId} onValueChange={handleClientSelect}>
+              <SelectTrigger className="w-full h-10 border-gray-300 focus:border-blue-500">
+              <SelectValue placeholder="Choose from saved clients..." />
+              </SelectTrigger>
+              <SelectContent className="bg-white max-h-60 overflow-y-auto">
+                {clients.map((client) => (
+              <SelectItem key={client._id} value={client._id}>
+                {client.name} — {client.email}
+              </SelectItem>
+              ))}
+              </SelectContent>
+              </Select>
+            </div>
             <Select value={billToData.country} onValueChange={(value) => setBillToData(prev => ({ ...prev, country: value }))}>
               <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
                 <SelectValue placeholder="India" />

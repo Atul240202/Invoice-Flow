@@ -11,6 +11,10 @@ import { Search, Filter, Eye, Edit, Copy, Trash2, Download, Send, MoreHorizontal
 import { useToast } from "../hooks/toast";
 import { Textarea } from "../components/Textarea";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+import api from "../utils/api";
+import { useEffect } from "react";
+import { useMemo } from "react";
 
 const ClientManagement = () => {
    const navigate = useNavigate();
@@ -28,94 +32,71 @@ const ClientManagement = () => {
     address: "",
     gstNumber: "",
   });
+  const [invoices, setInvoices] = useState([]);
 
-
-  const [clients, setClients] = useState([
-    {
-      id: "CLT-001",
-      name: "John Doe",
-      email: "john.doe@abc.com",
-      company: "ABC Industries",
-      industry: "Manufacturing",
-      phone: "+91 98765 43210",
-      address: "123 Main Street, Anytown, India",
-      gstNumber: "22AAAAA0000A1Z5",
-      totalRevenue: 125000,
-      totalInvoices: 8,
-      lastActivity: "2024-02-01",
-      status: "Active"
-    },
-    {
-      id: "CLT-002",
-      name: "Alice Smith",
-      email: "alice.smith@xyz.com",
-      company: "XYZ Corp",
-      industry: "Technology",
-      phone: "+91 87654 32109",
-      address: "456 Park Avenue, Somecity, India",
-      gstNumber: "29BBBBB0000B2Z6",
-      totalRevenue: 98500,
-      totalInvoices: 5,
-      lastActivity: "2024-01-28",
-      status: "Active"
-    },
-    {
-      id: "CLT-003",
-      name: "Bob Johnson",
-      email: "bob.johnson@dgtl.com",
-      company: "Digital Solutions Ltd",
-      industry: "Information Technology",
-      phone: "+91 76543 21098",
-      address: "789 Tech Road, Infocity, India",
-      gstNumber: "05CCCCC0000C3Z7",
-      totalRevenue: 87300,
-      totalInvoices: 6,
-      lastActivity: "2024-01-25",
-      status: "Active"
-    },
-    {
-      id: "CLT-004",
-      name: "Emily White",
-      email: "emily.white@ti.com",
-      company: "Tech Innovators",
-      industry: "Technology",
-      phone: "+91 65432 10987",
-      address: "101 Innovation Hub, Newtech, India",
-      gstNumber: "36DDDDD0000D4Z8",
-      totalRevenue: 76800,
-      totalInvoices: 4,
-      lastActivity: "2024-01-22",
-      status: "Active"
-    },
-    {
-      id: "CLT-005",
-      name: "David Brown",
-      email: "david.brown@mdrn.com",
-      company: "Modern Solutions",
-      industry: "Consulting",
-      phone: "+91 54321 09876",
-      address: "222 Business Park, Metrocity, India",
-      gstNumber: "13EEEEE0000E5Z9",
-      totalRevenue: 65200,
-      totalInvoices: 3,
-      lastActivity: "2024-01-19",
-      status: "Inactive"
-    },
-    {
-      id: "CLT-006",
-      name: "Sophia Green",
-      email: "sophia.green@bhub.com",
-      company: "Business Hub",
-      industry: "Finance",
-      phone: "+91 43210 98765",
-      address: "333 Financial District, Capitalcity, India",
-      gstNumber: "47FFFFF0000F6ZA",
-      totalRevenue: 54700,
-      totalInvoices: 2,
-      lastActivity: "2024-01-16",
-      status: "Active"
+  useEffect(() => {
+  const fetchInvoices = async () => {
+    try {
+      const res = await api.get("/invoices"); 
+      console.log("Fetched Invoices:", res.data);
+      setInvoices(res.data);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch invoices.",
+      });
     }
-  ]);
+  };
+
+  fetchInvoices();
+}, []);
+
+  useEffect(() => {
+  const fetchClients = async () => {
+    try {
+      const response = await api.get("/clients");
+      setClients(response.data);
+    } catch (err) {
+      console.error("Error fetching clients:", err);
+      toast({
+        title: "Error",
+        description: "Failed to fetch clients.",
+      });
+    }
+  };
+
+  fetchClients();
+}, []);
+
+const clientStatsMap = useMemo(() => {
+  return invoices.reduce((acc, inv) => {
+    const clientId = inv.billToDetail?._id;
+    if (!clientId) return acc;
+
+    const invoiceDate = new Date(inv.date); 
+
+    if (!acc[clientId]) {
+      acc[clientId] = {
+        totalRevenue: 0,
+        totalInvoices: 0,
+        latestInvoiceDate: invoiceDate,
+      };
+    } else {
+      if (invoiceDate > acc[clientId].latestInvoiceDate) {
+        acc[clientId].latestInvoiceDate = invoiceDate;
+      }
+    }
+
+    acc[clientId].totalRevenue += inv.summary?.totalAmount || 0;
+    acc[clientId].totalInvoices += 1;
+
+    return acc;
+  }, {});
+}, [invoices]);
+
+
+  const [clients, setClients] = useState([]);
 
   const [editingClient, setEditingClient] = useState(null);
 
@@ -136,13 +117,16 @@ const ClientManagement = () => {
   });
 
   const getTotalRevenue = () => {
-    return filteredClients.reduce((sum, client) => sum + client.totalRevenue, 0);
-  };
+  return invoices.reduce((sum, inv) => sum + (inv.summary?.totalAmount || 0), 0);
+};
 
-  const getAvgInvoiceValue = () => {
-    const totalRevenue = getTotalRevenue();
-    return filteredClients.length > 0 ? totalRevenue / filteredClients.length : 0;
-  };
+const getAvgInvoiceValue = () => {
+  const uniqueClientIds = [...new Set(invoices.map(inv => inv.billedTo?._id))];
+  return uniqueClientIds.length > 0
+    ? getTotalRevenue() / uniqueClientIds.length
+    : 0;
+};
+  
 
   const getActiveClientsThisMonth = () => {
     return filteredClients.filter(client => {
@@ -157,7 +141,7 @@ const ClientManagement = () => {
   const activeThisMonth = getActiveClientsThisMonth();
 
   const handleAction = (action, clientId) => {
-  const client = clients.find((c) => c.id === clientId);
+  const client = clients.find((c) => c._id === clientId);
   if (!client) return;
 
   switch (action) {
@@ -184,69 +168,79 @@ const ClientManagement = () => {
   }
 };
 
-const deleteClient = (clientId) => {
-  setClients(prev => prev.filter(client => client.id !== clientId));
-};
-  
-
-
-  const handleAddClient = (e) => {
-  e.preventDefault();
-
-  if (editingClient) {
-    // Editing existing client
-    setClients(prev =>
-      prev.map(client =>
-        client.id === editingClient.id
-          ? { ...client, ...newClient }
-          : client
-      )
-    );
-    setEditingClient(null);
+const deleteClient = async (clientId) => {
+  try {
+    await api.delete(`/clients/${clientId}`);
+    setClients(prev => prev.filter(client => client._id !== clientId));
     toast({
-      title: "Client Updated",
-      description: `Client ${newClient.name} has been updated successfully.`,
+      title: "Client Deleted",
+      description: "Client has been removed successfully.",
     });
-  } else {
-    // Adding new client
-    const newId = `CLT-${Math.floor(Math.random() * 1000)}`;
-    const newClientData = {
-      id: newId,
-      ...newClient,
-      totalRevenue: 0,
-      totalInvoices: 0,
-      lastActivity: new Date().toISOString().slice(0, 10),
-      status: "Active",
-    };
-    setClients(prev => [...prev, newClientData]);
+  } catch (err) {
+    console.error("Error deleting client:", err);
     toast({
-      title: "Client Added",
-      description: `Client ${newClientData.name} has been added successfully.`,
+      title: "Error",
+      description: "Failed to delete client.",
     });
   }
-
-  setNewClient({
-    name: "",
-    email: "",
-    company: "",
-    industry: "",
-    phone: "",
-    address: "",
-    gstNumber: "",
-  });
-  setShowAddForm(false);
 };
 
+const handleAddClient = async (e) => {
+  e.preventDefault();
+  try {
+    const payload = {
+      ...newClient,
+      gstin: newClient.gstNumber,
+    };
 
-  const toggleClientStatus = (clientId) => {
+    const response = await api.post("/clients", payload);
+    setClients(prev => [...prev, response.data]);
+
+    toast({
+      title: "Client Added",
+      description: `${response.data.name} has been added successfully.`,
+    });
+
+    setNewClient({
+      name: "",
+      email: "",
+      company: "",
+      industry: "",
+      phone: "",
+      address: "",
+      gstNumber: "",
+    });
+    setShowAddForm(false);
+  } catch (err) {
+    console.error("Error adding client:", err);
+    toast({
+      title: "Error",
+      description: "Failed to add client.",
+    });
+  }
+};
+
+  const toggleClientStatus = async (clientId) => {
+  try {
+    const response = await api.patch(`/clients/${clientId}/toggle`);
+    const updatedClient = response.data.client;
+
     setClients(prev =>
-      prev.map(client =>
-        client.id === clientId ? { ...client, status: client.status === "Active" ? "Inactive" : "Active" } : client
-      )
+      prev.map(c => c._id === updatedClient._id ? updatedClient : c)
     );
-  };
+    toast({
+      title: "Status Updated",
+      description: `Client is now ${updatedClient.status}`,
+    });
+  } catch (err) {
+    console.error("Error toggling status:", err);
+    toast({
+      title: "Error",
+      description: "Failed to toggle client status.",
+    });
+  }
+};
 
-  
 
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -480,7 +474,7 @@ const deleteClient = (clientId) => {
               </TableHeader>
               <TableBody>
                 {filteredClients.map((client) => (
-                  <TableRow key={client.id} className="table-row-hover border-b border-gray-200">
+                  <TableRow key={client._id} className="table-row-hover border-b border-gray-200">
                     <TableCell className="py-6 px-6">
                       <div>
                         <p className="font-bold text-black">{client.name}</p>
@@ -489,9 +483,13 @@ const deleteClient = (clientId) => {
                     </TableCell>
                     <TableCell className="font-semibold text-black py-6">{client.company}</TableCell>
                     <TableCell className="text-gray-700 font-medium py-6">{client.industry}</TableCell>
-                    <TableCell className="font-bold text-black py-6">₹{client.totalRevenue.toLocaleString()}</TableCell>
-                    <TableCell className="text-gray-700 font-medium py-6">{client.totalInvoices}</TableCell>
-                    <TableCell className="text-gray-700 font-medium py-6">{client.lastActivity}</TableCell>
+                    <TableCell className="font-bold text-black py-6">₹{(clientStatsMap[client._id]?.totalRevenue || 0).toLocaleString()}</TableCell>
+                    <TableCell className="text-gray-700 font-medium py-6">
+                      {clientStatsMap[client._id]?.totalInvoices || 0}
+                    </TableCell>
+                    <TableCell className="text-gray-700 font-medium py-6">
+                      {clientStatsMap[client._id]?.latestInvoiceDate? new Date(clientStatsMap[client._id].latestInvoiceDate).toLocaleDateString(): "—"}
+                    </TableCell>
                     <TableCell className="py-6">
                       <div className="flex items-center gap-2">
                         <Badge variant={client.status === "Active" ? "default" : "secondary"} className="font-semibold px-3 py-1">
@@ -500,7 +498,7 @@ const deleteClient = (clientId) => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleClientStatus(client.id)}
+                          onClick={() => toggleClientStatus(client._id)}
                           className={`text-xs px-3 py-1 rounded toggle-hover transition-all duration-200 ${
                             client.status === "Active"
                               ? "text-orange-600 hover:bg-orange-50"
@@ -519,20 +517,20 @@ const deleteClient = (clientId) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white shadow-xl border-2 border-gray-200 w-48 z-50">
-                          <DropdownMenuItem onClick={() => handleAction("viewed", client.id)} className="py-3 px-4 text-black dropdown-item">
+                          <DropdownMenuItem onClick={() => handleAction("viewed", client._id)} className="py-3 px-4 text-black dropdown-item">
                             <Eye className="mr-3 h-4 w-4" />
                             View Details
                           </DropdownMenuItem> 
-                          <DropdownMenuItem onClick={() => navigate(`/clients/${client.id}/edit`)} className="py-3 px-4 text-black dropdown-item">
+                          <DropdownMenuItem onClick={() => navigate(`/clients/${client._id}/edit`)} className="py-3 px-4 text-black dropdown-item">
                             <Edit className="mr-3 h-4 w-4" />
                             Edit Client
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction("invoiced", client.id)} className="py-3 px-4 text-black dropdown-item">
+                          <DropdownMenuItem onClick={() => handleAction("invoiced", client._id)} className="py-3 px-4 text-black dropdown-item">
                             <FileText className="mr-3 h-4 w-4" />
                             Create Invoice
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            onClick={() => handleAction("deleted", client.id)}
+                            onClick={() => handleAction("deleted", client._id)}
                             className="text-red-600 hover:text-red-700 py-3 px-4 hover:bg-red-50"
                           >
                             <Trash2 className="mr-3 h-4 w-4" />
