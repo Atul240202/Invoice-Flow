@@ -12,7 +12,8 @@ import ClientManagement from './pages/ClientManagement';
 import AddEditClient from './pages/EditClient';
 import InvoiceHistory from './pages/ClientHistory';
 import BankingPreviewStep from './components/invoice/BankingPreviewStep';
-// You can import other pages like Reports, Clients, etc., as needed.
+import ExpenseTracker from './pages/ClientExpenses';
+
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
   <Route path="clients/:id/edit" element={<AddEditClient />} />
   <Route path="invoices" element={<InvoiceHistory />} />
   <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
+  <Route path="expenseS" element={<ExpenseTracker />} />
 </Route>
 
 
