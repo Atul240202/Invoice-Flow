@@ -27,7 +27,7 @@ import { useNavigate } from 'react-router-dom';
 
 const CreateInvoice = () => {
   const { toast } = useToast();
-  const location = useLocation();
+  const location = useLocation(); 
   const { id } = useParams();
   const isEditing = !!id;
   const clientFromState = location.state?.client;
