@@ -13,7 +13,8 @@ import AddEditClient from './pages/EditClient';
 import InvoiceHistory from './pages/ClientHistory';
 import BankingPreviewStep from './components/invoice/BankingPreviewStep';
 import { Toaster } from "sonner";
-// You can import other pages like Reports, Clients, etc., as needed.
+import ExpenseTracker from './pages/ClientExpenses';
+
 
 function App() {
   return (
@@ -37,6 +38,7 @@ function App() {
   <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
   <Route path="invoices/:id/edit" element={<CreateInvoice />} /> 
   <Route path="settings" element={<SettingsPage />} />
+  <Route path="expenseS" element={<ExpenseTracker />} />
 </Route>
 
 

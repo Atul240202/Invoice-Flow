@@ -93,7 +93,9 @@ app.post('/api/invoices/:id/download-pdf', async (req, res) => {
     const htmlContent = generateInvoiceHTML(invoiceData);
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-    const pdfBuffer = await page.pdf({ format: 'A4' });
+    const pdfBuffer = await page.pdf({ format: 'A4',
+         printBackground: true,
+     });
     await browser.close();
 
     const filename = `invoice-${invoice.invoiceNumber || invoice._id}.pdf`;

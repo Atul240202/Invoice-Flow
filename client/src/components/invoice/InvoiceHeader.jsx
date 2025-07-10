@@ -5,12 +5,30 @@ import { Button } from "../button";
 import { Upload, Calendar } from "lucide-react";
 
 export const InvoiceHeader = ({ invoiceData, setInvoiceData }) => {
-  const handleLogoUpload = (event) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setInvoiceData((prev) => ({ ...prev, businessLogo: file }));
-    }
-  };
+
+  const toBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+  });
+
+
+
+  const handleLogoUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const base64 = await toBase64(file);
+
+  setInvoiceData(prev => ({
+    ...prev,
+    businessLogo: base64,         // for preview & PDF
+    businessLogoFile: file,       // optional: if you need raw File later
+  }));
+};
+
 
   return (
     <Card className="bg-white border border-gray-200 rounded-lg">

@@ -1,6 +1,10 @@
 const Invoice = require("../models/Invoice");
 const Client = require("../models/Client");
 const { isToday, isThisWeek, isThisMonth, isThisQuarter } = require("date-fns");
+const puppeteer = require("puppeteer");
+const path = require("path");
+const fs = require("fs");
+
 
 //create invoice
 exports.createInvoice = async (req, res) => {
@@ -201,3 +205,35 @@ exports.deleteInvoice = async (req, res) => {
     res.status(500).json({ message: "Error deleting invoice", error: error.message });
   }
 };
+
+
+/*exports.generateInvoicePDF  = async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    const url = `http://localhost:3000/invoice/${invoiceId}/print`; // React invoice print route
+    const filePath = path.join(__dirname, `../public/pdfs/invoice-${invoiceId}.pdf`);
+
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ['--no-sandbox']
+    });
+    const page = await browser.newPage();
+
+    await page.goto(url, {
+      waitUntil: "networkidle0",
+    });
+
+    await page.pdf({
+      path: filePath,
+      format: "A4",
+      printBackground: true,
+    });
+
+    await browser.close();
+
+    return res.status(200).json({ message: "PDF generated", pdfUrl: `/pdfs/invoice-${invoiceId}.pdf` });
+  } catch (error) {
+    console.error("PDF generation failed:", error);
+     res.send("PDF would be generated here");
+  }
+};*/

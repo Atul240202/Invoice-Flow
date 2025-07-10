@@ -7,13 +7,21 @@ const {
     getUserInvoices,
     getSingleInvoice,
     updateInvoice,
-    deleteInvoice
+    deleteInvoice,
+   // generateInvoicePDF
 } = require("../controllers/invoiceController");
+
+
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
     filename: (req, file, cb) => cb(null, `${Date.now()}--${file.originalname}`)
 });
+
+//router.get("/invoice/:id/generate-pdf", authMiddleware, generateInvoicePDF);
+
+
+
 
 const upload = multer({storage});
 
