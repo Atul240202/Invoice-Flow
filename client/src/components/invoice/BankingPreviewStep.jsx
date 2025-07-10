@@ -12,8 +12,20 @@ import axios from 'axios';
 
 
 
-const BankingPreviewStep = ({ invoiceData,billFromData,billToData }) => {
-  const form = useFormContext();
+const BankingPreviewStep = ({ invoiceData = {}, billFromData = {}, billToData = {} }) => {
+if (!invoiceData) {
+  console.warn("invoiceData is missing.");
+  return <div className="text-center py-8 text-gray-600">Loading invoice preview...</div>;
+}
+
+const items = invoiceData.items ?? [];
+
+if (!Array.isArray(items)) {
+  console.warn("invoiceData.items is not an array.");
+  return <div className="text-center py-8 text-gray-600">Loading invoice preview...</div>;
+}
+
+
   const [showBankDetails, setShowBankDetails] = useState(true);
 
   const [bankingDetails] = useState({
@@ -23,10 +35,11 @@ const BankingPreviewStep = ({ invoiceData,billFromData,billToData }) => {
     ifsc: "HDFC0001234",
   });
 
+  /*
   if (!form) {
     console.error("❌ useFormContext() returned null in BankingPreviewStep");
     return <div>Error: Form context not found.</div>;
-  }
+  } */
 
   
 

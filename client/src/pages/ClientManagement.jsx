@@ -32,14 +32,15 @@ const ClientManagement = () => {
     address: "",
     gstNumber: "",
   });
-  const [invoices, setInvoices] = useState([]);
+  const [invoiceData, setInvoiceData] = useState({ invoices: [] });
+  const { invoices } = invoiceData;
 
   useEffect(() => {
   const fetchInvoices = async () => {
     try {
       const res = await api.get("/invoices"); 
       console.log("Fetched Invoices:", res.data);
-      setInvoices(res.data);
+      setInvoiceData(res.data);
     } catch (error) {
       console.error("Error fetching invoices:", error);
       toast({

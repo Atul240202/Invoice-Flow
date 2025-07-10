@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const puppeteer = require('puppeteer');
 const generateInvoiceHTML = require('./invoiceTemplate');
 const fs = require('fs');
+const Invoice = require('./models/Invoice');
 
 dotenv.config();
 
@@ -19,7 +20,6 @@ app.use(cors({
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/pdfs', express.static(path.join(__dirname, 'public/pdfs')));
 
 
 connectDB();
@@ -35,22 +35,58 @@ app.use('/api/settings', settingsRoutes);
 
 const invoiceRoutes = require('./routes/invoiceRoutes');
 app.use('/api/invoices', invoiceRoutes);
-app.use('/invoices', express.static(path.join(__dirname, 'invoices')));
 
+const clientRoutes = require('./routes/clientRoutes');
+app.use('/api/clients', clientRoutes);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-const invoiceDir = path.join(__dirname, 'invoices');
-if (!fs.existsSync(invoiceDir)) {
-  fs.mkdirSync(invoiceDir);
-}
-
-
-app.post('/generate-pdf', async (req, res) => {
-  const invoiceData = req.body;
-
+app.post('/api/invoices/:id/download-pdf', async (req, res) => {
   try {
+    const invoiceId = req.params.id;
+
+    const invoice = await Invoice.findById(invoiceId)
+      .populate("billFrom")
+      .populate("billTo");
+
+    if (!invoice || !invoice.billFrom || !invoice.billTo) {
+      return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
+    }
+
+    // 💡 Format the data properly
+    const invoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      date: invoice.invoiceDate.toLocaleDateString("en-IN"),
+      dueDate: invoice.dueDate.toLocaleDateString("en-IN"),
+      items: invoice.items,
+      gstRate: invoice.gstRate,
+      igst: invoice.igst,
+      cgst: invoice.cgst,
+      sgst: invoice.sgst,
+      discount: invoice.discount,
+      additionalCharges: invoice.additionalCharges,
+      businessLogo: invoice.businessLogo,
+      signature: invoice.signature,
+      qrCode: invoice.qrCode,
+      terms: invoice.terms,
+
+      billFromData: {
+        businessName: invoice.billFrom.businessName,
+        address: invoice.billFrom.address,
+        city: invoice.billFrom.city,
+        state: invoice.billFrom.state,
+        pincode: invoice.billFrom.pincode,
+        gstin: invoice.billFrom.gstin,
+        pan: invoice.billFrom.pan,
+      },
+      billToData: {
+        businessName: invoice.billTo.businessName,
+        address: invoice.billTo.address,
+        city: invoice.billTo.city,
+        state: invoice.billTo.state,
+        pincode: invoice.billTo.pincode,
+        gstin: invoice.billTo.gstin,
+      }
+    };
+
     const browser = await puppeteer.launch();
     const page = await browser.newPage();
 
@@ -60,19 +96,19 @@ app.post('/generate-pdf', async (req, res) => {
     const pdfBuffer = await page.pdf({ format: 'A4' });
     await browser.close();
 
-    const filename = `invoice-${invoiceData.invoiceNumber || Date.now()}.pdf`;
-    const filepath = path.join(invoiceDir, filename);
-    fs.writeFileSync(filepath, pdfBuffer);
+    const filename = `invoice-${invoice.invoiceNumber || invoice._id}.pdf`;
 
-   
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': `attachment; filename="${filename}"`,
     });
 
-    return res.send(pdfBuffer); // No JSON, just raw buffer
+    res.send(pdfBuffer);
   } catch (err) {
-    console.error('PDF generation error:', err);
+    console.error("PDF generation error:", err);
     res.status(500).json({ error: 'Failed to generate PDF.' });
   }
 });
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

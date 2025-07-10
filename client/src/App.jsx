@@ -12,11 +12,13 @@ import ClientManagement from './pages/ClientManagement';
 import AddEditClient from './pages/EditClient';
 import InvoiceHistory from './pages/ClientHistory';
 import BankingPreviewStep from './components/invoice/BankingPreviewStep';
+import { Toaster } from "sonner";
 // You can import other pages like Reports, Clients, etc., as needed.
 
 function App() {
   return (
     <Router>
+      <Toaster position="top-right" richColors />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<HomePage />} />
@@ -33,6 +35,8 @@ function App() {
   <Route path="clients/:id/edit" element={<AddEditClient />} />
   <Route path="invoices" element={<InvoiceHistory />} />
   <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
+  <Route path="invoices/:id/edit" element={<CreateInvoice />} /> 
+  <Route path="settings" element={<SettingsPage />} />
 </Route>
 
 

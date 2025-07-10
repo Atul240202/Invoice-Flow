@@ -5,7 +5,10 @@ const itemSchema = new mongoose.Schema({
   gstRate: Number,
   quantity: Number,
   rate: Number,
-  amount: Number,
+  amount: {
+    type: Number,
+    default: 0,
+  },
   cgst: Number,
   sgst: Number,
   igst: Number,
@@ -47,11 +50,12 @@ const invoiceSchema = new mongoose.Schema({
     }
    ]
     },
+    /*
     billToDetail: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
       required: true
-    },
+    },*/
     shipping: {
         shippedFrom: {
             businessName: String, country: String, address: String,
