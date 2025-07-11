@@ -39,6 +39,13 @@ app.use('/api/invoices', invoiceRoutes);
 const clientRoutes = require('./routes/clientRoutes');
 app.use('/api/clients', clientRoutes);
 
+const expenseRoutes = require("./routes/expenseRoutes");
+app.use("/api/expenses", expenseRoutes);
+
+app.use("/api/reports", require("./routes/reportRoutes"));
+
+
+
 app.post('/api/invoices/:id/download-pdf', async (req, res) => {
   try {
     const invoiceId = req.params.id;
@@ -51,7 +58,6 @@ app.post('/api/invoices/:id/download-pdf', async (req, res) => {
       return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
     }
 
-    // 💡 Format the data properly
     const invoiceData = {
       invoiceNumber: invoice.invoiceNumber,
       date: invoice.invoiceDate.toLocaleDateString("en-IN"),
