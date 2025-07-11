@@ -13,6 +13,7 @@ import AddEditClient from './pages/EditClient';
 import InvoiceHistory from './pages/ClientHistory';
 import BankingPreviewStep from './components/invoice/BankingPreviewStep';
 import ExpenseTracker from './pages/ClientExpenses';
+import Reports from './pages/Reports';
 
 
 function App() {
@@ -34,7 +35,9 @@ function App() {
   <Route path="clients/:id/edit" element={<AddEditClient />} />
   <Route path="invoices" element={<InvoiceHistory />} />
   <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
-  <Route path="expenseS" element={<ExpenseTracker />} />
+  <Route path="expenses" element={<ExpenseTracker />} />
+  <Route path='reports' element={<Reports />} />
+  
 </Route>
 
 
