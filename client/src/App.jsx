@@ -14,6 +14,7 @@ import InvoiceHistory from './pages/ClientHistory';
 import BankingPreviewStep from './components/invoice/BankingPreviewStep';
 import { Toaster } from "sonner";
 import ExpenseTracker from './pages/ClientExpenses';
+import Reports from './pages/Reports';
 
 
 function App() {
@@ -38,7 +39,9 @@ function App() {
   <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
   <Route path="invoices/:id/edit" element={<CreateInvoice />} /> 
   <Route path="settings" element={<SettingsPage />} />
-  <Route path="expenseS" element={<ExpenseTracker />} />
+  <Route path="expenses" element={<ExpenseTracker />} />
+  <Route path='reports' element={<Reports />} />
+  
 </Route>
 
 
