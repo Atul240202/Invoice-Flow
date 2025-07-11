@@ -22,20 +22,22 @@ import axios from "axios";
 import { exchangeRates, currencySymbols } from "../utils/currencyUtils";
 import { useForm, FormProvider } from "react-hook-form";
 import { useLocation } from 'react-router-dom';
-
+import { useParams } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 const CreateInvoice = () => {
   const { toast } = useToast();
-  const location = useLocation();
+  const location = useLocation(); 
+  const { id } = useParams();
+  const isEditing = !!id;
   const clientFromState = location.state?.client;
-  // you can pass defaultValues if needed
-
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [showGSTModal, setShowGSTModal] = useState(false);
   const [showShippingDetails, setShowShippingDetails] = useState(false);
-  const [showEmail, setShowEmail] = useState(false);
-  const [showEditFields, setShowEditFields] = useState(false); // FIX 1: Add this state
   const [numberFormat, setNumberFormat] = useState("indian");
+  const [selectedClientId, setSelectedClientId] = useState("");
+
   const [itemColumns, setItemColumns] = useState([
     { key: "item", label: "Item", visible: true },
     { key: "gstRate", label: "GST %", visible: true },
@@ -43,10 +45,9 @@ const CreateInvoice = () => {
     { key: "rate", label: "Rate", visible: true },
     { key: "amount", label: "Amount", visible: true },
   ]);
-   
-   const methods = useForm({
+
+  const methods = useForm({
     defaultValues: {
-      // all fields from all steps here
       invoiceNumber: "",
       date: "",
       dueDate: "",
@@ -63,9 +64,8 @@ const CreateInvoice = () => {
       signature: null,
       attachments: [],
       currency: "INR",
-    }
+    },
   });
-
 
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: "A00001",
@@ -78,7 +78,7 @@ const CreateInvoice = () => {
     cgst: 0,
     sgst: 0,
     igst: 0,
-    discount: 0, 
+    discount: 0,
     discountPercentage: 0,
     additionalCharges: 0,
     grandTotal: 0,
@@ -91,12 +91,7 @@ const CreateInvoice = () => {
     saveAsClient: false,
   });
 
-  const conversionRate = exchangeRates[invoiceData.currency] || 1;
-  const currencySymbol = currencySymbols[invoiceData.currency] || "₹";
-
-
-  const [billFromData, setBillFromData] = useState({
-    country: "India",
+  const [billFromData, setBillFromData] = useState({ country: "India",
     businessName: "",
     phone: "",
     gstin: "",
@@ -105,11 +100,8 @@ const CreateInvoice = () => {
     pincode: "",
     state: "",
     email: "",
-    pan: ""
-  });
-
-  const [billToData, setBillToData] = useState({
-    country: "India",
+    pan: ""  });
+  const [billToData, setBillToData] = useState({ country: "India",
     businessName: "",
     phone: "",
     gstin: "",
@@ -118,17 +110,11 @@ const CreateInvoice = () => {
     pincode: "",
     state: "",
     email: "",
-    pan: ""
-  });
-
-  const [gstConfig, setGstConfig] = useState({
-    taxType: "GST",
+    pan: "" });
+  const [gstConfig, setGstConfig] = useState({ taxType: "GST",
     placeOfSupply: "",
-    gstType: "CGST+SGST"
-  });
-
-  const [shippingDetails, setShippingDetails] = useState({
-    shippedFrom: {
+    gstType: "CGST+SGST"});
+  const [shippingDetails, setShippingDetails] = useState({ shippedFrom: {
       businessName: "",
       country: "India",
       address: "",
@@ -141,140 +127,162 @@ const CreateInvoice = () => {
       address: "",
       city: "",
       state: ""
-    }
-  });
+    }  });
 
- /* useEffect(() => {
-  const invoiceId = params.invoiceId;
-  if (invoiceId) {
-    axios.get(`/api/invoices/${invoiceId}`).then((res) => {
-      const data = res.data;
-      setInvoiceData(data);
-      reset(data); // assuming react-hook-form
-    });
-  }
-}, []);*/
+  const conversionRate = exchangeRates[invoiceData.currency] || 1;
+  const currencySymbol = currencySymbols[invoiceData.currency] || "₹";
 
-  
-
-  
   useEffect(() => {
-  const fetchBillFromData = async () => {
+    const fetchBillFromData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (res.data?.billFrom) {
+          setBillFromData(res.data.billFrom);
+        }
+      } catch (error) {
+        console.error("Failed to fetch bill-from data:", error);
+      }
+    };
+
+    fetchBillFromData();
+
+     console.log("clientFromState:", clientFromState);
+
+    if (clientFromState) {
+      console.log("Client passed via state:", clientFromState);
+      setSelectedClientId(clientFromState._id);
+      setBillToData((prev) => ({
+        ...prev,
+        businessName: clientFromState.name || "",
+        email: clientFromState.email || "",
+        gstin: clientFromState.gstNumber || "",
+        address: clientFromState.address || "",
+        phone: clientFromState.phone || "",
+      }));
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchInvoiceData = async () => {
+      if (!isEditing) return;
+      try {
+        const token = localStorage.getItem("token");
+        const res = await api.get(`/invoices/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const data = res.data;
+        setInvoiceData(data.invoiceData || {});
+        setBillFromData(data.billFrom || {});
+        setBillToData(data.billTo || {});
+        setShippingDetails(data.shipping || {});
+        setGstConfig(data.gstConfig || {});
+        setSelectedClientId(data.billToDetail || "");
+        methods.reset(data.invoiceData || {});
+      } catch (err) {
+        console.error("Failed to load invoice:", err);
+        toast({
+          title: "Failed to load invoice",
+          description: err.response?.data?.message || "An error occurred",
+          variant: "destructive",
+        });
+      }
+    };
+    fetchInvoiceData();
+  }, [isEditing, id]);
+
+  useEffect(() => {
+  console.log("currentStep updated to:", currentStep);
+}, [currentStep]);
+
+
+  const handleSaveAndContinue = async () => {
+    console.log("Save and continue")
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+      const formData = new FormData();
+
+      formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
+      formData.append("invoiceDate", invoiceData?.date || "");
+      formData.append("dueDate", invoiceData?.dueDate || "");
+
+      if (invoiceData?.businessLogo) formData.append("businessLogo", invoiceData.businessLogo);
+      if (invoiceData?.qrImage) formData.append("qrImage", invoiceData.qrImage);
+      invoiceData.attachments?.forEach((file) => formData.append("attachments", file));
+      if (invoiceData?.signature) formData.append("signature", invoiceData.signature);
+
+      if (!selectedClientId?.trim() && !billToData.businessName?.trim()) {
+  toast({
+    title: "Missing Recipient Info",
+    description: "Please select a client or manually fill in the Bill To section.",
+    variant: "destructive",
+  });
+  return;
+}
+      
+console.log("Selected Client ID:", selectedClientId);
+
+      formData.append("billFrom", JSON.stringify(billFromData));
+      formData.append("billTo", JSON.stringify(billToData));
+      formData.append("billToDetail", selectedClientId);
+      formData.append("shipping", JSON.stringify(shippingDetails));
+      formData.append("gstConfig", JSON.stringify(gstConfig));
+      formData.append("items", JSON.stringify(invoiceData.items));
+      formData.append("summary", JSON.stringify({
+        subtotal: invoiceData.subtotal,
+        cgst: invoiceData.cgst,
+        sgst: invoiceData.sgst,
+        discount: invoiceData.discount,
+        totalAmount: invoiceData.grandTotal,
+      }));
+      formData.append("additionalOptions", JSON.stringify({
+        terms: invoiceData.terms,
+        notes: invoiceData.notes,
+        attachments: [],
+        contactDetails: invoiceData.contactDetails,
+        additionalInfo: invoiceData.additionalInfo || "",
+      }));
+      formData.append("currency", invoiceData.currency);
+      formData.append("status", "draft");
+      formData.append("saveAsClient", invoiceData.saveAsClient);
+
+      // Save bill-from data
+      await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (res.data?.billFrom) {
-        setBillFromData(res.data.billFrom);
+      let res;
+      if (isEditing) {
+        res = await api.put(`/invoices/${id}`, formData, {
+          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+        });
+      } else {
+        res = await api.post("/invoices", formData, {
+          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+        });
       }
+
+      toast({
+        title: "Success",
+        description: isEditing ? "Invoice updated successfully." : "Invoice created successfully.",
+      });
+      console.log("Current Step:", currentStep);
+      setCurrentStep(2);
+      console.log("Going to Step 2");
     } catch (error) {
-      console.error("Failed to fetch bill-from data:", error);
+      console.error("Error creating invoice:", error);
+      toast({
+        title: "Error",
+        description: "Something went wrong while saving invoice.",
+        variant: "destructive",
+      });
     }
   };
-
-  fetchBillFromData();
-
-  if (clientFromState) {
-    setBillToData((prev) => ({
-      ...prev,
-      businessName: clientFromState.name || "",
-      email: clientFromState.email || "",
-      gstin: clientFromState.gstNumber || "",
-      address: clientFromState.address || "",
-      phone: clientFromState.phone || "",
-      // Add more if needed
-    }));
-  }
-}, []);
-
-
-  // FIX 3: Remove hsn from newItem
-  const handleSaveAndContinue = async () => {
-  const formData = new FormData();
-
-  formData.append("invoiceNumber", invoiceData.invoiceNumber);
-  formData.append("invoiceDate", invoiceData.date);
-  formData.append("dueDate", invoiceData.dueDate);
-
-  if (invoiceData.businessLogo) {
-    formData.append("businessLogo", invoiceData.businessLogo);
-  }
-
-  if (invoiceData.qrImage) {
-  formData.append("qrImage", invoiceData.qrImage);
-}
-
-if (invoiceData.attachments?.length) {
-    invoiceData.attachments.forEach((file) => {
-      formData.append("attachments", file); 
-    });
-  }
-  
-  if (invoiceData.signature) {
-    formData.append("signature", invoiceData.signature);
-  }
-
-  formData.append("billFrom", JSON.stringify(billFromData));
-  formData.append("billTo", JSON.stringify(billToData));
-  formData.append("shipping", JSON.stringify(shippingDetails));
-  formData.append("gstConfig", JSON.stringify(gstConfig));
-  formData.append("items", JSON.stringify(invoiceData.items));
-  formData.append("summary", JSON.stringify({
-    subtotal: invoiceData.subtotal,
-    cgst: invoiceData.cgst,
-    sgst: invoiceData.sgst,
-    discount: invoiceData.discount,
-    totalAmount: invoiceData.grandTotal,
-  }));
-  formData.append("additionalOptions", JSON.stringify({
-    terms: invoiceData.terms,
-    notes: invoiceData.notes,
-    attachments: [], 
-    contactDetails: invoiceData.contactDetails,
-    additionalInfo: invoiceData.additionalInfo || "",
-  }));
-  formData.append("currency", invoiceData.currency);
-  formData.append("status", "draft");
-  formData.append("saveAsClient", invoiceData.saveAsClient);
-
-  try {
-    const token = localStorage.getItem("token"); 
-    console.log("Token:", token);
-
-    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const res = await api.post("/invoices", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`
-      }
-    });
-
-    console.log("Invoice created:", res.data);
-    toast({
-      title: "Success",
-      description: "Invoice created successfully.",
-    });
-
-    setCurrentStep(2); 
-  } catch (error) {
-    console.error("Error creating invoice:", error);
-    toast({
-      title: "Error",
-      description: "Something went wrong while saving invoice.",
-      variant: "destructive",
-    });
-  }
-};
-
 
   const handleSaveDraft = () => {
     toast({
@@ -282,45 +290,6 @@ if (invoiceData.attachments?.length) {
       description: "Invoice saved as draft successfully",
     });
   };
-
- 
-
-  // Show Edit Fields Modal (place before return)
-  {itemColumns.map((col, idx) => (
-  <div key={col.key} className="flex items-center gap-2 mb-2">
-    {/* Label input */}
-    <Input
-      value={col.label}
-      onChange={e => {
-        const updated = [...itemColumns];
-        updated[idx].label = e.target.value;
-        setItemColumns(updated);
-      }}
-      className="flex-1"
-      placeholder="Label"
-    />
-    {/* Optional: Key input (for advanced use or debugging) */}
-    <Input
-      value={col.key}
-      onChange={e => {
-        const updated = [...itemColumns];
-        updated[idx].key = e.target.value.trim().replace(/\s+/g, '').toLowerCase();
-        setItemColumns(updated);
-      }}
-      className="w-32"
-      placeholder="Key"
-    />
-    <input
-      type="checkbox"
-      checked={col.visible}
-      onChange={e => {
-        const updated = [...itemColumns];
-        updated[idx].visible = e.target.checked;
-        setItemColumns(updated);
-      }}
-    />
-  </div>
-))}
 
   return (
     <FormProvider {...methods}>
@@ -341,14 +310,16 @@ if (invoiceData.attachments?.length) {
         {/* Header */}
         <div className="flex justify-between items-start bg-white p-6 rounded-lg border shadow-sm">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">Create Invoice</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {isEditing ? "Edit Invoice" : "Create Invoice"}
+            </h1>
             <p className="text-gray-600">
               Generate professional GST-compliant invoices with our step-by-step process
             </p>
           </div>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-2 border-blue-200 text-blue-700 bg-blue-50">
-              Step 1 of 2
+              {isEditing ? "Editing Invoice" : "Step 1 of 2"}
             </Badge>
           </div>
         </div>
@@ -369,23 +340,6 @@ if (invoiceData.attachments?.length) {
             billToData={billToData}
             setBillToData={setBillToData}
           />
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="saveAsClient"
-              checked={invoiceData.saveAsClient || false}
-              onChange={(e) =>
-                setInvoiceData((prev) => ({
-                ...prev,
-                saveAsClient: e.target.checked,
-                }))
-              }
-              className="rounded border-gray-300"
-            />
-            <label htmlFor="saveAsClient" className="text-sm text-gray-700">
-            Save this as a new client
-            </label>
-          </div>
         </div>
 
         {/* Action Buttons Row */}

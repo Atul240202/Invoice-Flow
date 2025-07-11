@@ -9,7 +9,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Search, Filter, Eye, Edit, Copy, Trash2, Download, Send, MoreHorizontal } from "lucide-react";
 import { useToast } from "../hooks/toast";
 import { useNavigate } from "react-router-dom";
-
+import { useEffect } from "react";
+import axios from "axios";
+import { isToday, isThisWeek, isThisMonth, isThisQuarter } from "date-fns";
 
 const InvoiceHistory = () => {
   const { toast } = useToast();
@@ -18,93 +20,167 @@ const InvoiceHistory = () => {
   const [clientFilter, setClientFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
   const navigate = useNavigate();
+  const [status, setStatus] = useState("Draft");
+  const [loading, setLoading] = useState(false);
 
-  const [invoices] = useState([
-    {
-      id: "INV-2024-001",
-      clientName: "ABC Industries",
-      amount: 45000,
-      date: "2024-01-15",
-      dueDate: "2024-02-15",
-      status: "Paid",
-      items: 3
-    },
-    {
-      id: "INV-2024-002",
-      clientName: "XYZ Corp",
-      amount: 32500,
-      date: "2024-01-14",
-      dueDate: "2024-02-14",
-      status: "Sent",
-      items: 2
-    },
-    {
-      id: "INV-2024-003",
-      clientName: "Digital Solutions Ltd",
-      amount: 28900,
-      date: "2024-01-13",
-      dueDate: "2024-02-13",
-      status: "Overdue",
-      items: 4
-    },
-    {
-      id: "INV-2024-004",
-      clientName: "Tech Innovators",
-      amount: 55200,
-      date: "2024-01-12",
-      dueDate: "2024-02-12",
-      status: "Paid",
-      items: 5
-    },
-    {
-      id: "INV-2024-005",
-      clientName: "Modern Solutions",
-      amount: 18750,
-      date: "2024-01-11",
-      dueDate: "2024-02-11",
-      status: "Draft",
-      items: 2
-    },
-    {
-      id: "INV-2024-006",
-      clientName: "Business Hub",
-      amount: 67300,
-      date: "2024-01-10",
-      dueDate: "2024-02-10",
-      status: "Sent",
-      items: 6
+  const [invoices, setInvoices] = useState([]);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+  const fetchInvoices = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("User not logged in");
+        return;
+      }
+
+      const response = await fetch(`http://localhost:5000/api/invoices?date=${dateFilter}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch invoices");
+
+      const data = await response.json();
+      console.log("Invoices fetched:", data); 
+      setInvoices(data.invoices || []);  
+    } catch (err) {
+      console.error(err);
+      setError("Unable to load invoices.");
+    } finally {
+      setLoading(false);
     }
-  ]);
-  
+  };
 
-  
+  fetchInvoices();
+}, []);
 
-const handleAction = (action, invoiceId) => {
+  const handleStatusChange = async (invoiceId, newStatus) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast({
+        title: "Unauthorized",
+        description: "Login required to change status.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+      method: "PUT", 
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status: newStatus }),
+    });
+
+    if (!response.ok) throw new Error("Failed to update status");
+
+    const updated = await response.json();
+
+    setInvoices((prev) =>
+      prev.map((inv) =>
+        inv._id === invoiceId ? { ...inv, status: newStatus } : inv
+      )
+    );
+
+    toast({
+      title: "Status Updated",
+      description: `Invoice ${invoiceId} marked as ${newStatus}`,
+    });
+  } catch (error) {
+    console.error(error);
+    toast({
+      title: "Error",
+      description: "Failed to update invoice status.",
+      variant: "destructive",
+    });
+  }
+};
+
+
+const handleAction = async (action, invoice) => {
+  const invoiceId = invoice._id;
   switch (action) {
     case "viewed":
       navigate(`/invoices/${invoiceId}/preview`);
       break;
 
     case "edited":
+      if (invoice.status === "Paid") {
+        toast({
+          title: "Edit Disabled",
+          description: "Paid invoices cannot be edited.",
+          variant: "destructive",
+        });
+      return;
+      }
       navigate(`/invoices/${invoiceId}/edit`);
       break;
 
     case "downloaded":
-      axios
-        .post(`/api/invoices/${invoiceId}/download-pdf`, {}, { responseType: 'blob' })
-        .then((res) => {
-          const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
-          const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", `invoice-${invoiceId}.pdf`);
-          document.body.appendChild(link);
-          link.click();
-        });
-      break;
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      `http://localhost:5000/api/invoices/${invoice._id}/download-pdf`,
+      {}, 
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+      }
+    );
+
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `invoice-${invoice._id}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } catch (err) {
+    toast({
+      title: "Download Failed",
+      description: "Unable to generate PDF",
+      variant: "destructive",
+    });
+  }finally {
+    setLoading(false); 
+  }
+  break;
+
 
     case "deleted":
-      // Implement delete logic
-      break;
+      if (!window.confirm("Are you sure you want to delete this invoice?")) return;
+
+      try {
+        const token = localStorage.getItem("token");
+        await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        });
+
+      setInvoices((prev) => prev.filter((inv) => inv._id !== invoiceId));
+
+      toast({
+        title: "Deleted",
+        description: `Invoice ${invoiceId} deleted successfully.`,
+      });
+      } catch (err) {
+        toast({
+        title: "Error",
+        description: "Failed to delete the invoice.",
+        variant: "destructive",
+        });
+      }
+    break;
 
     case "sent":
       // Implement send logic
@@ -121,20 +197,36 @@ const handleAction = (action, invoiceId) => {
   });
 };
 
+const matchesDate = (invoiceDate) => {
+  const date = new Date(invoiceDate);
+  switch (dateFilter) {
+    case "today": return isToday(date);
+    case "week": return isThisWeek(date);
+    case "month": return isThisMonth(date);
+    case "quarter": return isThisQuarter(date);
+    default: return true;
+  }
+};
 
   // Get unique client names for filter
-  const uniqueClients = Array.from(new Set(invoices.map(invoice => invoice.clientName))).sort();
+  const uniqueClients = Array.from(new Set(invoices.map(invoice => invoice.billTo?.businessName || "Unknown"))).sort();
 
-  const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
-      invoice.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.clientName.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || invoice.status.toLowerCase() === statusFilter;
-    const matchesClient = clientFilter === "all" || invoice.clientName === clientFilter;
-    
-    return matchesSearch && matchesStatus && matchesClient;
-  });
+  const filteredInvoices = invoices.filter((invoice) => {
+  const matchesSearch =
+    (invoice?.id?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
+     invoice?.billTo?.businessName?.toLowerCase()?.includes(searchTerm.toLowerCase()));
+
+  const matchesStatus =
+    statusFilter === "all" || (invoice?.status?.toLowerCase?.() || "draft")  === statusFilter;
+
+  const matchesClient =
+    clientFilter === "all" || invoice?.billTo?.businessName === clientFilter;
+
+  const matchesDateFilter = dateFilter === "all" || matchesDate(invoice.invoiceDate);
+
+  return matchesSearch && matchesStatus && matchesClient && matchesDateFilter;
+});
+
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -154,13 +246,14 @@ const handleAction = (action, invoiceId) => {
 
 
   const getTotalStats = () => {
-    const totalAmount = filteredInvoices.reduce((sum, inv) => sum + inv.amount, 0);
+    const totalAmount = filteredInvoices.reduce((sum, inv) => sum + (inv.amount ?? inv.summary?.totalAmount ?? 0), 0);
     const paidAmount = filteredInvoices
-      .filter(inv => inv.status === "Paid")
-      .reduce((sum, inv) => sum + inv.amount, 0);
-    const pendingAmount = filteredInvoices
-      .filter(inv => inv.status === "Sent" || inv.status === "Overdue")
-      .reduce((sum, inv) => sum + inv.amount, 0);
+  .filter(inv => inv.status === "Paid")
+  .reduce((sum, inv) => sum + (inv.amount ?? inv.summary?.totalAmount ?? 0), 0);
+
+const pendingAmount = filteredInvoices
+  .filter(inv => inv.status === "Sent" || inv.status === "Overdue")
+  .reduce((sum, inv) => sum + (inv.amount ?? inv.summary?.totalAmount ?? 0), 0);
     
     return { totalAmount, paidAmount, pendingAmount };
   };
@@ -279,6 +372,11 @@ const handleAction = (action, invoiceId) => {
           <CardTitle className="text-2xl text-black font-bold">Invoices</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {loading && (
+            <div className="flex justify-center items-center py-4">
+              <span className="text-sm font-medium text-gray-600">Generating PDF, please wait...</span>
+            </div>
+          )}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-gray-50">
@@ -295,18 +393,36 @@ const handleAction = (action, invoiceId) => {
               </TableHeader>
               <TableBody>
                 {filteredInvoices.map((invoice) => (
-                  <TableRow key={invoice.id} className="table-row-hover border-b border-gray-200">
-                    <TableCell className="font-bold text-black py-6 px-6">{invoice.id}</TableCell>
-                    <TableCell className="font-semibold text-black py-6">{invoice.clientName}</TableCell>
-                    <TableCell className="font-bold text-black py-6">₹{invoice.amount.toLocaleString()}</TableCell>
-                    <TableCell className="text-gray-700 font-medium py-6">{new Date(invoice.date).toLocaleDateString('en-IN')}</TableCell>
+                  <TableRow key={invoice._id} className="table-row-hover border-b border-gray-200">
+                    <TableCell className="font-bold text-black py-6 px-6">{invoice._id}</TableCell>
+                    <TableCell className="font-semibold text-black py-6">{invoice.billTo?.businessName}</TableCell>
+                    <TableCell className="font-bold text-black py-6">       
+  ₹{(invoice.amount ?? invoice.summary?.totalAmount ?? 0).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="text-gray-700 font-medium py-6">
+                      {invoice.invoiceDate ? new Date(invoice.invoiceDate).toLocaleDateString('en-IN') : "N/A"}
+                    </TableCell>
                     <TableCell className="text-gray-700 font-medium py-6">{new Date(invoice.dueDate).toLocaleDateString('en-IN')}</TableCell>
                     <TableCell className="py-6">
-                      <Badge variant={getStatusColor(invoice.status)} className="font-semibold px-3 py-1">
-                        {invoice.status}
-                      </Badge>
+                      <Select
+                        value={
+                          invoice.status? invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1).toLowerCase(): "Draft"
+                        }
+                        onValueChange={(newStatus) => handleStatusChange(invoice._id, newStatus)}
+                      >
+                      <SelectTrigger className="min-w-[120px] text-sm font-semibold border-gray-300">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white shadow-xl border-2 border-gray-200 z-50">
+                        <SelectItem value="Draft" className="text-black">Draft</SelectItem>
+                        <SelectItem value="Sent" className="text-black">Sent</SelectItem>
+                        <SelectItem value="Overdue" className="text-black">Overdue</SelectItem>
+                        <SelectItem value="Paid" className="text-black">Paid</SelectItem>
+                      </SelectContent>
+                      </Select>
+
                     </TableCell>
-                    <TableCell className="text-gray-700 font-medium py-6">{invoice.items} items</TableCell>
+                    <TableCell className="text-gray-700 font-medium py-6">{invoice.items?.length || 0} items</TableCell>
                     <TableCell className="text-right py-6">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -315,26 +431,26 @@ const handleAction = (action, invoiceId) => {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="bg-white shadow-xl border-2 border-gray-200 w-48 z-50">
-                          <DropdownMenuItem onClick={() => handleAction("viewed", invoice.id)} className="py-3 px-4 text-black dropdown-item">
+                          <DropdownMenuItem onClick={() => handleAction("viewed", invoice)} className="py-3 px-4 text-black dropdown-item">
                             <Eye className="mr-3 h-4 w-4" />
                             View
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction("edited", invoice.id)} className="py-3 px-4 text-black dropdown-item">
+                          <DropdownMenuItem onClick={() => handleAction("edited", invoice)} className="py-3 px-4 text-black dropdown-item">
                             <Edit className="mr-3 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleAction("downloaded", invoice.id)} className="py-3 px-4 text-black dropdown-item">
+                          <DropdownMenuItem onClick={() => handleAction("downloaded", invoice)} className="py-3 px-4 text-black dropdown-item">
                             <Download className="mr-3 h-4 w-4" />
                             Download
                           </DropdownMenuItem>
                           {invoice.status !== "Sent" && (
-                            <DropdownMenuItem onClick={() => handleAction("sent", invoice.id)} className="py-3 px-4 text-black dropdown-item">
+                            <DropdownMenuItem onClick={() => handleAction("sent", invoice)} className="py-3 px-4 text-black dropdown-item">
                               <Send className="mr-3 h-4 w-4" />
                               Send
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem 
-                            onClick={() => handleAction("deleted", invoice.id)}
+                            onClick={() => handleAction("deleted", invoice)}
                             className="text-red-600 hover:text-red-700 py-3 px-4 hover:bg-red-50"
                           >
                             <Trash2 className="mr-3 h-4 w-4" />

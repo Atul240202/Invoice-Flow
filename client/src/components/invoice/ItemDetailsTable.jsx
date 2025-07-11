@@ -123,7 +123,7 @@ export const ItemDetailsTable = ({
 
           {/* Table Rows */}
           <div className="max-h-72 overflow-y-auto">
-            {invoiceData.items.map((item, index) => (
+            {Array.isArray(invoiceData.items) && invoiceData.items.map((item, index) => (
               <div key={index} className="flex w-full border-b items-center">
                 <div className="flex-1 px-4 py-2 border-r">
                   <Input

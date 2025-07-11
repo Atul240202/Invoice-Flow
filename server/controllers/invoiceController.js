@@ -1,8 +1,10 @@
 const Invoice = require("../models/Invoice");
 const Client = require("../models/Client");
+const { isToday, isThisWeek, isThisMonth, isThisQuarter } = require("date-fns");
 const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
+
 
 //create invoice
 exports.createInvoice = async (req, res) => {
@@ -24,6 +26,15 @@ exports.createInvoice = async (req, res) => {
       saveAsClient,
     } = req.body;
 
+    const safeParse = (json) => {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return {}; 
+  }
+};
+
+const parsedSummary = safeParse(summary);
     const invoice = new Invoice({
       user: req.user._id,
       billToDetail: billToDetail,
@@ -31,20 +42,21 @@ exports.createInvoice = async (req, res) => {
       invoiceDate,
       dueDate,
       businessLogo: req.files['businessLogo'] ? req.files['businessLogo'][0].path : '',
-      billFrom: JSON.parse(billFrom),
-      billTo: JSON.parse(billTo),
-      shipping: JSON.parse(shipping),
-      gstConfig: JSON.parse(gstConfig),
+      billFrom: safeParse(billFrom),
+      billTo: safeParse(billTo),
+      shipping: safeParse(shipping),
+      gstConfig: safeParse(gstConfig),
       currency,
-      items: JSON.parse(items),
-      summary: JSON.parse(summary),
+      items: safeParse(items),
+      summary: parsedSummary,
+      amount: parsedSummary?.totalAmount || 0,
       additionalOptions: {
-        ...JSON.parse(additionalOptions),
+        ...safeParse(additionalOptions),
         attachments: req.files['attachments']?.map(file => file.path) || [],
         qrImage: req.files['qrImage']?.[0]?.path || '',
         signature: req.files['signature']?.[0]?.path || '',
       },
-      status,
+      status: status || "Draft",
     });
 
     await invoice.save();
@@ -81,8 +93,32 @@ exports.createInvoice = async (req, res) => {
 //get all invoices of user
 exports.getUserInvoices = async (req, res) => {
   try {
+    const userId = req.user._id;
+    const { date } = req.query; 
+   // console.log("Fetching invoices for user:", userId);
     const invoices = await Invoice.find({ user: req.user._id }).sort({ createdAt: -1 });
-    res.status(200).json(invoices);
+   // console.log("Found invoices:", invoices);
+   if (!date || date === "all") {
+      return res.status(200).json({ invoices });
+    }
+
+    const filtered = invoices.filter(inv => {
+      const invDate = new Date(inv.invoiceDate);
+      switch (date) {
+        case "today":
+          return isToday(invDate);
+        case "week":
+          return isThisWeek(invDate);
+        case "month":
+          return isThisMonth(invDate);
+        case "quarter":
+          return isThisQuarter(invDate);
+        default:
+          return true;
+      }
+    });
+
+    res.status(200).json({invoices: filtered});
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch invoices", error: error.message });
   }
@@ -107,7 +143,7 @@ exports.updateInvoice = async (req, res) => {
       invoiceDate,
       dueDate,
       billFrom,
-      billTo,
+      billTo,  
       shipping,
       gstConfig,
       currency,
@@ -117,24 +153,27 @@ exports.updateInvoice = async (req, res) => {
       status
     } = req.body;
 
-    const updatedFields = {
-      invoiceNumber,
-      invoiceDate,
-      dueDate,
-      billFrom: JSON.parse(billFrom),
-      billTo: JSON.parse(billTo),
-      shipping: JSON.parse(shipping),
-      gstConfig: JSON.parse(gstConfig),
-      currency,
-      items: JSON.parse(items),
-      summary: JSON.parse(summary),
-      additionalOptions: {
+    const updatedFields = {};
+
+    if (invoiceNumber) updatedFields.invoiceNumber = invoiceNumber;
+    if (invoiceDate) updatedFields.invoiceDate = invoiceDate;
+    if (dueDate) updatedFields.dueDate = dueDate;
+    if (currency) updatedFields.currency = currency;
+    if (status) updatedFields.status = status;
+
+    if (billFrom) updatedFields.billFrom = JSON.parse(billFrom);
+    if (billTo) updatedFields.billTo = JSON.parse(billTo);
+    if (shipping) updatedFields.shipping = JSON.parse(shipping);
+    if (gstConfig) updatedFields.gstConfig = JSON.parse(gstConfig);
+    if (items) updatedFields.items = JSON.parse(items);
+    if (summary) updatedFields.summary = JSON.parse(summary);
+    if (additionalOptions) {
+      updatedFields.additionalOptions = {
         ...JSON.parse(additionalOptions),
         attachments: req.files?.attachments?.map(file => file.path) || [],
-         qrImage: req.files?.qrImage?.[0]?.path || '',
-      },
-      status
-    };
+        qrImage: req.files?.qrImage?.[0]?.path || '',
+      };
+    }
 
     if (req.files?.businessLogo) {
       updatedFields.businessLogo = req.files.businessLogo[0].path;
@@ -142,7 +181,7 @@ exports.updateInvoice = async (req, res) => {
 
     const invoice = await Invoice.findOneAndUpdate(
       { _id: req.params.id, user: req.user._id },
-      updatedFields,
+      { $set: updatedFields },
       { new: true }
     );
 
