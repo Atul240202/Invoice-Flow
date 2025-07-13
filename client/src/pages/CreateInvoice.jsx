@@ -265,6 +265,11 @@ console.log("Selected Client ID:", selectedClientId);
         res = await api.post("/invoices", formData, {
           headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
         });
+
+        // 👇 Set the returned _id into state
+  if (res?.data?.invoice?._id) {
+    setInvoiceData((prev) => ({ ...prev, _id: res.data.invoice._id }));
+  }
       }
 
       toast({
@@ -293,6 +298,7 @@ console.log("Selected Client ID:", selectedClientId);
 
   return (
     <FormProvider {...methods}>
+  <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
 
         {currentStep === 2 ? (
       <BankingPreviewStep
@@ -302,15 +308,14 @@ console.log("Selected Client ID:", selectedClientId);
         gstConfig={gstConfig}
         shippingDetails={shippingDetails}
         onBack={() => setCurrentStep(1)}
+        goToStep={setCurrentStep} 
       />
     ) : (
-      
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto p-6 space-y-8">
-        {/* Header */}
-        <div className="flex justify-between items-start bg-white p-6 rounded-lg border shadow-sm">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">
+  <div className="mx-auto w-full max-w-[calc(100vw-32px)] md:max-w-[calc(100vw-64px)] lg:max-w-7xl space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row justify-between items-start bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
+            <div className="space-y-2 mb-4 sm:mb-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
               {isEditing ? "Edit Invoice" : "Create Invoice"}
             </h1>
             <p className="text-gray-600">
@@ -318,7 +323,7 @@ console.log("Selected Client ID:", selectedClientId);
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-2 border-blue-200 text-blue-700 bg-blue-50">
+            <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-2 border-blue-500 text-blue-500 bg-blue-50">
               {isEditing ? "Editing Invoice" : "Step 1 of 2"}
             </Badge>
           </div>
@@ -343,35 +348,71 @@ console.log("Selected Client ID:", selectedClientId);
         </div>
 
         {/* Action Buttons Row */}
-        <div className="flex flex-wrap gap-3 bg-white p-4 rounded-lg border shadow-sm">
-          <Button
-            onClick={() => setShowShippingDetails(!showShippingDetails)}
-            variant="outline"
-            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-          >
-            📦 Add Shipping Details
-          </Button>
-          <Button
-            onClick={() => setShowGSTModal(true)}
-            variant="outline"
-            className="text-blue-600 border-blue-200 hover:bg-blue-50"
-          >
-            💰 Add GST
-          </Button>
-          {/* FIX 2: Use Select directly, not inside Button */}
-          <Select
-            value={numberFormat}
-            onValueChange={setNumberFormat}
-          >
-            <SelectTrigger className="w-56 border-gray-300 focus:border-blue-500">
-              <SelectValue placeholder="Number Format" />
-            </SelectTrigger>
-            <SelectContent className="bg-white border shadow-lg">
-              <SelectItem value="indian">Indian (1,23,456.78)</SelectItem>
-              <SelectItem value="international">International (123,456.78)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        
+<div className="flex flex-wrap items-center gap-4 bg-white p-5 rounded-xl border border-blue-100 shadow-sm">
+  {/* Shipping Button */}
+  <Button
+    onClick={() => setShowShippingDetails(!showShippingDetails)}
+    variant="outline"
+    className="text-blue-600 border-blue-500 hover:bg-blue-50 font-medium"
+  >
+     Add Shipping
+  </Button>
+
+  {/* GST Button */}
+  <Button
+    onClick={() => setShowGSTModal(true)}
+    variant="outline"
+    className="text-blue-600 border-blue-500 hover:bg-blue-50 font-medium"
+  >
+     Add GST
+  </Button>
+
+  {/* Number Format Selector */}
+  <div className="w-full sm:w-auto">
+    <Select value={numberFormat} onValueChange={setNumberFormat}>
+      <SelectTrigger className="w-56 border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded-md text-sm">
+        <SelectValue placeholder="Number Format" />
+      </SelectTrigger>
+      <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg">
+        <SelectItem value="indian" className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+          Indian (1,23,456.78)
+        </SelectItem>
+        <SelectItem value="international" className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+          International (123,456.78)
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+
+  {/* Currency Selector */}
+  <div className="w-full sm:w-auto">
+    <Select
+      value={invoiceData.currency}
+      onValueChange={(value) =>
+        setInvoiceData((prev) => ({ ...prev, currency: value }))
+      }
+    >
+      <SelectTrigger className="w-56 border border-blue-300 focus:ring-2 focus:ring-blue-400 rounded-md text-sm">
+        <SelectValue placeholder="Currency" />
+      </SelectTrigger>
+      <SelectContent className="bg-white border border-gray-200 rounded-md shadow-lg">
+        <SelectItem value="INR" className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+           Indian Rupees (₹)
+        </SelectItem>
+        <SelectItem value="USD" className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+           US Dollar ($)
+        </SelectItem>
+        <SelectItem value="EUR" className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+           Euro (€)
+        </SelectItem>
+        <SelectItem value="GBP" className="hover:bg-blue-50 hover:text-blue-700 cursor-pointer">
+           British Pound (£)
+        </SelectItem>
+      </SelectContent>
+    </Select>
+  </div>
+</div>
 
         {/* Shipping Details Section */}
         {showShippingDetails && (
@@ -382,27 +423,7 @@ console.log("Selected Client ID:", selectedClientId);
         )}
 
         {/* Currency Selection */}
-        <Card className="border shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <Label className="text-sm font-medium text-gray-700">Currency:</Label>
-              <Select
-                value={invoiceData.currency}
-                onValueChange={(value) => setInvoiceData(prev => ({ ...prev, currency: value }))}
-              >
-                <SelectTrigger className="w-60 border-gray-300 focus:border-blue-500">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-white border shadow-lg">
-                  <SelectItem value="INR">Indian Rupees (₹)</SelectItem>
-                  <SelectItem value="USD">USD ($)</SelectItem>
-                  <SelectItem value="EUR">EUR (€)</SelectItem>
-                  <SelectItem value="GBP">GBP (£)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardContent>
-        </Card>
+        
 
         {/* Item Details Section */}
         <Card className="border shadow-sm">
@@ -410,6 +431,8 @@ console.log("Selected Client ID:", selectedClientId);
             <CardTitle className="text-xl text-gray-900">Item Details</CardTitle>
           </CardHeader>
           <CardContent className="p-0">
+
+            <div className="overflow-x-auto">
             <ItemDetailsTable
               invoiceData={invoiceData}
               setInvoiceData={setInvoiceData}
@@ -419,6 +442,7 @@ console.log("Selected Client ID:", selectedClientId);
               conversionRate={conversionRate}
               currencySymbol={currencySymbol}
             />
+            </div>
           </CardContent>
         </Card>
 
@@ -473,12 +497,13 @@ console.log("Selected Client ID:", selectedClientId);
           <Button
             onClick={handleSaveAndContinue}
             size="lg"
-            className="px-8 bg-blue-600 hover:bg-blue-700 text-white"
+            className="px-8 bg-blue-500 hover:bg-blue-50 text-white"
           >
             Save & Continue
           </Button>
         </div>
-      </div>
+       
+      
 
       {/* GST Configuration Modal */}
       <GSTConfigModal
@@ -490,7 +515,11 @@ console.log("Selected Client ID:", selectedClientId);
         billToState={billToData.state}
       />
     </div>
+
+    
+   
      )}
+     </div>
     </FormProvider>
   );
 };

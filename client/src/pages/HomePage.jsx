@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-300 to-blue-300 text-white flex flex-col justify-center items-center p-4">
+    <div className="min-h-screen  bg-gradient-to-r from-blue-500 to-cyan-400 text-white flex flex-col justify-center items-center p-4">
       <motion.h1
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -37,7 +37,7 @@ export default function HomePage() {
               Ready to manage your invoices?
             </p>
             <Link to="/login">
-              <Button className="flex items-center bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 text-lg rounded-xl">
+              <Button className="flex items-center bg-gradient-to-r from-blue-500 to-cyan-400 hover:bg-purple-700 text-white px-6 py-2 text-lg rounded-xl">
                 Get Started <ArrowRight className="ml-2" />
               </Button>
             </Link>

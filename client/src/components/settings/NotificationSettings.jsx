@@ -24,7 +24,7 @@ export default function NotificationSettings() {
             <button
               onClick={() => handleToggle(key)}
               className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
-                value ? "bg-purple-600" : "bg-gray-300"
+                value ? "bg-blue-500" : "bg-gray-300"
               }`}
             >
               <div

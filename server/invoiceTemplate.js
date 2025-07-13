@@ -92,9 +92,8 @@ function generateInvoiceHTML(data) {
           border: 1px solid #ddd6fe;
           padding: 16px;
           border-radius: 12px;
-          margin-top: 24px;
           width: 300px;
-          float: right;
+          margin-left: auto; /* Push totals to right */
         }
         .totals-box p {
           display: flex;
@@ -109,56 +108,92 @@ function generateInvoiceHTML(data) {
           font-size: 16px;
           color: #7e22ce;
         }
-        .bank-signature {
+        .bank-details {
+          background-color: #f5f3ff;
+          border: 1px solid #ddd6fe;
+          border-radius: 12px;
+          padding: 20px;
+          margin-top: 20px;
+          width: 100%;
+        }
+        .bank-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.5rem;
+          color: #1e293b;
+        }
+        .signature-container {
           display: flex;
-          justify-content: space-between;
-          margin-top: 50px;
+          flex-direction: column;
+          align-items: flex-end;
+          margin-top: 20px;
         }
-        .bank-info p {
-          margin: 4px 0;
-        }
-        .signature p {
-          text-align: right;
+        .signature-img {
+          height: 64px;
+          margin-top: 0.5rem;
         }
         .terms {
           margin-top: 40px;
           border-top: 1px solid #e5e7eb;
           padding-top: 20px;
         }
+        .totals-divider {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 1rem;
+          gap: 0.75rem;
+        }
+        .totals-divider hr {
+          flex-grow: 1;
+          border: none;
+          border-top: 1px solid #d8b4fe;
+        }
+        .totals-label {
+          padding: 0 0.5rem;
+          font-weight: 600;
+          color: #7e22ce;
+          font-size: 0.875rem;
+        }
+        .bank-signature-container {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 20px;
+        }
       </style>
     </head>
     <body>
 
       <!-- Header -->
-     <!-- Header Section -->
-<div class="header section">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
-    <div>
-      <h1 style="
-        font-size: 40px;
-        color: #7e22ce;
-        text-transform: uppercase;
-        letter-spacing: -0.5px;
-        margin-bottom: 12px;
-        font-weight: 700;
-      ">
-        Invoice
-      </h1>
-      <div class="invoice-info" style="font-size: 14px; color: #1e293b;">
-        <p><span style="color: #6b7280;">Invoice No:</span> <strong>#${data.invoiceNumber}</strong></p>
-        <p><span style="color: #6b7280;">Invoice Date:</span> <strong>${data.date}</strong></p>
-        <p><span style="color: #6b7280;">Due Date:</span> <strong>${data.dueDate}</strong></p>
+      <div class="header section">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%;">
+          <div>
+            <h1 style="
+              font-size: 40px;
+              color: #7e22ce;
+              text-transform: uppercase;
+              letter-spacing: -0.5px;
+              margin-bottom: 12px;
+              font-weight: 700;
+            ">
+              Invoice
+            </h1>
+            <div class="invoice-info" style="font-size: 14px; color: #1e293b;">
+              <p><span style="color: #6b7280;">Invoice No:</span> <strong>#${data.invoiceNumber}</strong></p>
+              <p><span style="color: #6b7280;">Invoice Date:</span> <strong>${data.date}</strong></p>
+              <p><span style="color: #6b7280;">Due Date:</span> <strong>${data.dueDate}</strong></p>
+            </div>
+          </div>
+          ${
+            data.businessLogo
+              ? `<div style="flex-shrink: 0;">
+                  <img src="${data.businessLogo}" alt="Business Logo" style="height: 80px; border-radius: 6px; border: 1px solid #ccc; margin-left: 20px;" />
+                </div>`
+              : ''
+          }
+        </div>
       </div>
-    </div>
-    ${
-      data.businessLogo
-        ? `<div style="flex-shrink: 0;">
-            <img src="${data.businessLogo}" alt="Business Logo" style="height: 80px; border-radius: 6px; border: 1px solid #ccc; margin-left: 20px;" />
-          </div>`
-        : ''
-    }
-  </div>
-</div>
+
       <!-- Billing Info -->
       <div class="billing section">
         <div class="billing-box">
@@ -192,32 +227,44 @@ function generateInvoiceHTML(data) {
         </tbody>
       </table>
 
-      <!-- Totals -->
+      <!-- Totals Section (Right-aligned) -->
       <div class="totals-box">
+        <div class="totals-divider">
+          <hr />
+          <span class="totals-label">TOTAL</span>
+          <hr />
+        </div>
+
         <p><span>Amount:</span> ₹${total.toFixed(2)}</p>
-        ${data.igst ? `<p><span>IGST:</span> ₹${data.igst.toFixed(2)}</p>` : ''}
-        ${data.cgst ? `<p><span>CGST:</span> ₹${data.cgst.toFixed(2)}</p>` : ''}
-        ${data.sgst ? `<p><span>SGST:</span> ₹${data.sgst.toFixed(2)}</p>` : ''}
-        ${data.discount ? `<p><span>Discount:</span> <span style="color:red;">-₹${data.discount.toFixed(2)}</span></p>` : ''}
-        ${data.additionalCharges ? `<p><span>Additional Charges:</span> ₹${data.additionalCharges.toFixed(2)}</p>` : ''}
+
+        ${data.igst > 0 ? `<p><span>IGST:</span> ₹${data.igst.toFixed(2)}</p>` : ''}
+        ${data.cgst > 0 ? `<p><span>CGST:</span> ₹${data.cgst.toFixed(2)}</p>` : ''}
+        ${data.sgst > 0 ? `<p><span>SGST:</span> ₹${data.sgst.toFixed(2)}</p>` : ''}
+        ${data.discount > 0 ? `<p><span>Discount:</span> <span style="color:red;">-₹${data.discount.toFixed(2)}</span></p>` : ''}
+        ${data.additionalCharges > 0 ? `<p><span>Additional Charges:</span> ₹${data.additionalCharges.toFixed(2)}</p>` : ''}
+
         <p class="grand"><span>Grand Total:</span> ₹${grandTotal.toFixed(2)}</p>
       </div>
 
-      <!-- Bank + Signature -->
-      <div class="bank-signature">
-        <div class="bank-info">
+      <!-- Bank Details (Left-aligned below totals) -->
+      <div class="bank-signature-container">
+        <div class="bank-details">
           <h3>Bank Details</h3>
-          <p><strong>Account Name:</strong> Animesh Pravinchandra Kudake</p>
-          <p><strong>Account Number:</strong> 68025555438</p>
-          <p><strong>IFSC:</strong> MAHB0000009</p>
-          <p><strong>Bank:</strong> Bank Of Maharashtra</p>
-          <p><strong>Account Type:</strong> Savings</p>
+          <div class="bank-grid">
+            ${data.accountHolderName ? `<p><strong>Account Name:</strong> ${data.accountHolderName}</p>` : ''}
+            ${data.accountNumber ? `<p><strong>Account Number:</strong> ${data.accountNumber}</p>` : ''}
+            ${data.ifsc ? `<p><strong>IFSC:</strong> ${data.ifsc}</p>` : ''}
+            ${data.bankName ? `<p><strong>Bank:</strong> ${data.bankName}</p>` : ''}
+            ${data.accountType ? `<p><strong>Account Type:</strong> ${data.accountType}</p>` : ''}
+          </div>
         </div>
+
+        <!-- Signature (Right-aligned) -->
         ${
           data.signature
-            ? `<div class="signature">
-                <p>Authorized Signatory</p>
-                <img src="${data.signature}" style="height: 60px;" />
+            ? `<div class="signature-container">
+                <p class="signature-label">Authorized Signatory</p>
+                <img src="${data.signature}" alt="Signature" class="signature-img" />
               </div>`
             : ''
         }

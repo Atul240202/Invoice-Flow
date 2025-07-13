@@ -94,7 +94,7 @@ export default function BusinessSettings() {
 
   return (
     <div className="bg-white shadow-xl rounded-2xl p-8 max-w-3xl mx-auto mt-6">
-      <h2 className="text-2xl font-bold text-purple-700 mb-2">Business Settings</h2>
+      <h2 className="text-2xl font-bold text-blue-500 mb-2">Business Settings</h2>
       <p className="text-gray-600 mb-6">Manage your company’s legal and contact details.</p>
 
       <form onSubmit={handleSubmit} className="space-y-5">
@@ -165,8 +165,8 @@ export default function BusinessSettings() {
           disabled={loading}
           className={`w-full py-3 rounded-xl font-semibold transition-all duration-200 ${
             loading
-              ? "bg-purple-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-purple-600 to-blue-500 hover:shadow-xl hover:scale-[1.01] text-white"
+              ? "bg-blue-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-cyan-400 to-blue-500 hover:shadow-xl hover:scale-[1.01] text-white"
           }`}
         >
           {loading ? "Saving..." : "Save Changes"}

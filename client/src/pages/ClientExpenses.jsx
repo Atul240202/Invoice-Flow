@@ -14,6 +14,8 @@ import { useToast } from "../hooks/toast";
 import { Checkbox } from "../components/checkbox";
 import { Switch } from "../components/Switch";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
+  import axios from "axios";
+
 
 const ExpenseTracker = () => {
   const { toast } = useToast();
@@ -246,12 +248,7 @@ const ExpenseTracker = () => {
     });
   };
 
-  const exportToPDF = () => {
-    toast({
-      title: "Export Started", 
-      description: "Your PDF report is being generated...",
-    });
-  };
+  
 
   const exportToJSON = () => {
     const dataStr = JSON.stringify(filteredExpenses, null, 2);
@@ -262,6 +259,29 @@ const ExpenseTracker = () => {
     linkElement.setAttribute('download', exportFileDefaultName);
     linkElement.click();
   };
+
+
+const handleExportReport = async () => {
+  try {
+    const res = await fetch("http://localhost:5000/api/expenses/export-pdf", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ from: "2024-07-01", to: "2024-07-31" }),
+});
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Expense_Report.pdf";
+    link.click();
+    link.remove();
+  } catch (err) {
+    alert("Export failed");
+    console.error(err);
+  }
+};
+
 
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -286,7 +306,7 @@ const ExpenseTracker = () => {
            
             Import Bank Statement
           </Button>
-          <Button onClick={exportToPDF} className="h-18 px-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg">
+          <Button onClick={handleExportReport} className="h-18 px-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg">
             
             Export Report
           </Button>
@@ -873,7 +893,7 @@ const ExpenseTracker = () => {
                   <Download className="mr-2 h-4 w-4" />
                   Export Excel
                 </Button>
-                <Button onClick={exportToPDF} className="h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold">
+                <Button onClick={handleExportReport} className="h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold">
                   <Download className="mr-2 h-4 w-4" />
                   Export PDF
                 </Button>

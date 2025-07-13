@@ -83,7 +83,7 @@ export default function ProfileSettings() {
   return (
     <div className="max-w-4xl mx-auto space-y-10 animate-fade-in">
       <div className="flex items-center gap-4">
-        <div className="p-3 rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 shadow-lg">
+        <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg">
           <User className="h-7 w-7 text-white" />
         </div>
         <div>
@@ -95,7 +95,7 @@ export default function ProfileSettings() {
       <Card className="shadow-xl border border-gray-200 bg-white">
         <CardHeader className="border-b border-gray-100 pb-6">
           <CardTitle className="text-xl font-semibold text-gray-800 flex items-center gap-2">
-            <User className="h-5 w-5 text-purple-600" />
+            <User className="h-5 w-5 text-blue-500" />
             Personal Info
           </CardTitle>
         </CardHeader>
@@ -110,12 +110,12 @@ export default function ProfileSettings() {
                   placeholder="Enter your name"
                   value={form.fullName}
                   onChange={handleChange}
-                  className="h-11 border-gray-300 focus:border-purple-500 bg-white"
+                  className="h-11 border-gray-300 focus:border-blue-500 bg-white"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email" className="flex items-center gap-1">
-                  <Mail className="w-4 h-4 text-purple-600" />
+                  <Mail className="w-4 h-4 text-blue-500" />
                   Email Address
                 </Label>
                 <Input
@@ -132,7 +132,7 @@ export default function ProfileSettings() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="phone">
-                  <Phone className="w-4 h-4 text-purple-600 inline-block mr-1" />
+                  <Phone className="w-4 h-4 text-blue-500 inline-block mr-1" />
                   Phone Number
                 </Label>
                 <Input
@@ -141,12 +141,12 @@ export default function ProfileSettings() {
                   placeholder="Enter your phone"
                   value={form.phone}
                   onChange={handleChange}
-                  className="h-11 border-gray-300 focus:border-purple-500"
+                  className="h-11 border-gray-300 focus:border-blue-500"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="address">
-                  <MapPin className="w-4 h-4 text-purple-600 inline-block mr-1" />
+                  <MapPin className="w-4 h-4 text-blue-500 inline-block mr-1" />
                   Address
                 </Label>
                 <Input
@@ -155,7 +155,7 @@ export default function ProfileSettings() {
                   placeholder="Your full address"
                   value={form.address}
                   onChange={handleChange}
-                  className="h-11 border-gray-300 focus:border-purple-500"
+                  className="h-11 border-gray-300 focus:border-blue-500"
                 />
               </div>
             </div>
@@ -169,7 +169,7 @@ export default function ProfileSettings() {
               )}
               <Button
                 type="submit"
-                className="h-11 px-6 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold hover:from-purple-700 hover:to-blue-700 shadow-md"
+                className="h-11 px-6 bg-gradient-to-r from-cyan-400 to-blue-500 text-white font-semibold hover:from-purple-700 hover:to-blue-700 shadow-md"
               >
                 Save Profile
               </Button>

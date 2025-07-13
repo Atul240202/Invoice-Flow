@@ -89,7 +89,7 @@ export default function SecuritySettings() {
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
         />
-        <button className="bg-purple-600 text-white py-2 rounded-xl">
+        <button className="bg-blue-500 text-white py-2 rounded-xl">
           Change Password
         </button>
       </form>

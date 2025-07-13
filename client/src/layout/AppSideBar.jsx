@@ -10,6 +10,7 @@ import {
   Shield,
   TrendingDown,
 } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 export function AppSidebar() {
   const menuItems = [
@@ -32,13 +33,13 @@ export function AppSidebar() {
     <Sidebar
       className={`
         fixed top-0 left-0 h-full z-40
-        border-r border-gray-200  bg-fuchsia-50 shadow-lg transition-transform duration-300
+        border-r border-gray-200  shadow-lg transition-transform duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         w-64
       `}
     >
       <SidebarHeader className="flex items-center gap-4 p-6 border-b border-gray-200">
-        <div className="h-12 w-12 bg-gradient-to-br from-purple-600 to-blue-500 rounded-xl flex items-center justify-center shadow-md">
+        <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-xl flex items-center justify-center shadow-md">
           <span className="text-white font-bold text-lg">IF</span>
         </div>
         <div>

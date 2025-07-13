@@ -126,6 +126,28 @@ const Reports = () => {
     }
   ];
 
+  const exportToPDF = async () => {
+  try {
+    const res = await fetch("http://localhost:5000/api/export-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ from: "2024-07-01", to: "2024-07-31" }),
+    });
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Expense_Report.pdf";
+    link.click();
+    link.remove();
+  } catch (err) {
+    alert("Export failed");
+    console.error(err);
+  }
+};
+
+
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
       {/* Enhanced Header */}
@@ -151,9 +173,13 @@ const Reports = () => {
             </SelectContent>
           </Select>
           
-          <Button className="h-12 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg transition-all duration-200">
-            Export Report
-          </Button>
+         <Button
+  onClick={exportToPDF}
+  className="h-12 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg transition-all duration-200"
+>
+  Export Report
+</Button>
+
         </div>
       </div>
 

@@ -100,7 +100,7 @@ export default function RegisterForm() {
         className="mr-2"
       />
       <label className="text-sm text-gray-600">
-        I agree to the <a href="#" className="text-purple-600 underline">Terms</a> and <a href="#" className="text-purple-600 underline">Privacy Policy</a>
+        I agree to the <a href="#" className="text-blue-500 underline">Terms</a> and <a href="#" className="text-blue-500 underline">Privacy Policy</a>
       </label>
       </div>
       {errors.length > 0 && (
@@ -112,7 +112,7 @@ export default function RegisterForm() {
       )}
       <button
         type="submit"
-        className="bg-purple-400 hover:bg-purple-700 text-white py-2 rounded-xl font-medium"
+        className=" bg-gradient-to-r from-blue-500 to-cyan-400 hover:bg-purple-700 text-white py-2 rounded-xl font-medium"
       >
         Register
       </button>
