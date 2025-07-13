@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
 import { Button } from "../components/button";
 import { Input } from "../components/Input";
@@ -14,6 +14,8 @@ import { useToast } from "../hooks/toast";
 import { Checkbox } from "../components/checkbox";
 import { Switch } from "../components/Switch";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
+import api from "../utils/api";
+import axios from 'axios';
   import axios from "axios";
 
 
@@ -44,58 +46,24 @@ const ExpenseTracker = () => {
     itcEligible: false
   });
 
-  const [expenses, setExpenses] = useState([
-    {
-      id: "1",
-      date: "2024-01-15",
-      amount: 5000,
-      vendor: "Office Rent Co.",
-      category: "Rent",
-      gstPercent: 18,
-      gstin: "27AABCU9603R1ZM",
-      description: "Monthly office rent",
-      tags: ["office", "monthly"],
-      type: "Business",
-      isRecurring: true,
-      recurringFrequency: "Monthly",
-      receipts: [],
-      itcEligible: true,
-      itcAmount: 900
-    },
-    {
-      id: "2",
-      date: "2024-01-14",
-      amount: 2500,
-      vendor: "Petrol Pump",
-      category: "Transport",
-      subCategory: "Fuel",
-      gstPercent: 5,
-      description: "Fuel for company vehicle",
-      tags: ["travel", "fuel"],
-      type: "Business",
-      isRecurring: false,
-      receipts: [],
-      itcEligible: true,
-      itcAmount: 125
-    },
-    {
-      id: "3",
-      date: "2024-01-13",
-      amount: 1200,
-      vendor: "Electricity Board",
-      category: "Utilities",
-      subCategory: "Electricity",
-      gstPercent: 18,
-      description: "Monthly electricity bill",
-      tags: ["utilities", "monthly"],
-      type: "Business",
-      isRecurring: true,
-      recurringFrequency: "Monthly",
-      receipts: [],
-      itcEligible: true,
-      itcAmount: 216
-    }
-  ]);
+  const [expenses, setExpenses] = useState([]);
+
+  useEffect(() => {
+      const fetchExpenses = async () => {
+      try {
+        const res = await api.get("http://localhost:5000/api/expenses");
+        setExpenses(res.data); 
+      } catch (err) {
+        toast({
+        title: "Failed to load expenses",
+        description: err.response?.data?.message || "Server error",
+        variant: "destructive"
+        });
+      }
+      };
+
+    fetchExpenses();
+    }, []);
 
   const categories = [
     { main: "Rent", sub: ["Office Rent", "Equipment Rent"] },
@@ -121,37 +89,28 @@ const ExpenseTracker = () => {
     { rate: 28, label: "28% (Luxury items)" }
   ];
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    const newExpense = {
-      id: Date.now().toString(),
-      date: formData.date,
-      amount: parseFloat(formData.amount),
-      vendor: formData.vendor,
-      category: formData.category,
-      subCategory: formData.subCategory,
-      gstPercent: parseFloat(formData.gstPercent) || 0,
-      gstin: formData.gstin,
-      description: formData.description,
-      tags: formData.tags,
-      type: formData.type,
-      isRecurring: formData.isRecurring,
-      recurringFrequency: formData.recurringFrequency,
-      recurringStartDate: formData.recurringStartDate,
-      recurringEndDate: formData.recurringEndDate,
-      receipts: [],
-      itcEligible: formData.itcEligible && formData.type === "Business" && parseFloat(formData.gstPercent) > 0,
-      itcAmount: formData.itcEligible && formData.type === "Business" 
-        ? (parseFloat(formData.amount) * parseFloat(formData.gstPercent)) / 100 
-        : 0
-    };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    setExpenses([...expenses, newExpense]);
-    
+  try {
+    const data = new FormData();
+
+    Object.entries(formData).forEach(([key, value]) => {
+  if (key === "tags") {
+    value.forEach((tag) => data.append("tags[]", tag));
+  } else {
+    data.append(key, value);
+  }
+});
+selectedFiles.forEach((file) => data.append("receipts", file));
+
+    const res = await api.post("http://localhost:5000/api/expenses", data);
+
+    setExpenses((prev) => [...prev, res.data]); 
+
     toast({
       title: "Expense Added Successfully",
-      description: `Added ${formData.category} expense of ₹${formData.amount}${newExpense.itcEligible ? ` (ITC: ₹${newExpense.itcAmount})` : ''}`,
+      description: `Added ${formData.category} expense of ₹${formData.amount}${formData.itcEligible ? ` (ITC: ₹${formData.itcAmount})` : ''}`,
     });
 
     // Reset form
@@ -172,8 +131,34 @@ const ExpenseTracker = () => {
       recurringEndDate: "",
       itcEligible: false
     });
+    setSelectedFiles([]);
     setTagInput("");
-  };
+
+  } catch (err) {
+    toast({
+      title: "Error adding expense",
+      description: err.response?.data?.message || "Server error",
+      variant: "destructive"
+    });
+  }
+};
+
+
+const fileInputRef = useRef(null);
+const [selectedFiles, setSelectedFiles] = useState([]);
+
+const handleFileChange = (e) => {
+  const files = Array.from(e.target.files);
+  setSelectedFiles(files);
+};
+
+const handleRemoveFile = (indexToRemove) => {
+  setSelectedFiles((prevFiles) =>
+    prevFiles.filter((_, index) => index !== indexToRemove)
+  );
+};
+
+
 
   const addTag = () => {
     if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
@@ -193,18 +178,20 @@ const ExpenseTracker = () => {
   };
 
   const autoDetectGST = (vendor) => {
-    const vendorData = expenses.find(e => e.vendor === vendor);
-    if (vendorData && vendorData.gstPercent) {
-      setFormData({
-        ...formData,
-        vendor,
-        gstPercent: vendorData.gstPercent.toString(),
-        gstin: vendorData.gstin || ""
-      });
-    } else {
-      setFormData({ ...formData, vendor });
-    }
-  };
+  const match = expenses.find(e => e.vendor === vendor);
+  if (match) {
+    setFormData({
+      ...formData,
+      vendor,
+      gstPercent: match.gstPercent.toString(),
+      gstin: match.gstin || ""
+    });
+  } else {
+    setFormData({ ...formData, vendor });
+  }
+};
+
+
 
   // Calculate stats
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
@@ -219,14 +206,27 @@ const ExpenseTracker = () => {
     color: `hsl(${Math.random() * 360}, 70%, 50%)`
   })).filter(item => item.value > 0);
 
-  const monthlyTrend = [
-    { month: "Jan", expenses: 101500, income: 180000, itc: 18270 },
-    { month: "Feb", expenses: 95200, income: 195000, itc: 17136 },
-    { month: "Mar", expenses: 108900, income: 210000, itc: 19602 },
-    { month: "Apr", expenses: 87600, income: 175000, itc: 15768 },
-    { month: "May", expenses: 112300, income: 225000, itc: 20214 },
-    { month: "Jun", expenses: 99800, income: 205000, itc: 17964 }
-  ];
+  const [monthlyTrend, setMonthlyTrend] = useState([]);
+
+useEffect(() => {
+  const fetchTrend = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("http://localhost:5000/api/reports/monthly-trend", {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        },
+      });
+      const data = await res.json();
+      setMonthlyTrend(data);
+    } catch (err) {
+      console.error("Trend fetch failed:", err);
+    }
+  };
+
+  fetchTrend();
+}, []);
+
 
   const topVendors = vendorHistory.slice(0, 5).map(vendor => ({
     name: vendor,
@@ -439,7 +439,7 @@ const handleExportReport = async () => {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="vendor" className="text-sm font-bold text-gray-700 uppercase tracking-wide">Vendor (Auto-suggest)</Label>
+                    <Label htmlFor="vendor" className="text-sm font-bold text-gray-700 uppercase tracking-wide">Vendor </Label>
                     <Input
                       id="vendor"
                       type="text"
@@ -493,7 +493,7 @@ const handleExportReport = async () => {
                   )}
 
                   <div className="space-y-2">
-                    <Label htmlFor="gst" className="text-sm font-bold text-gray-700 uppercase tracking-wide">GST Rate (Auto-detected)</Label>
+                    <Label htmlFor="gst" className="text-sm font-bold text-gray-700 uppercase tracking-wide">GST Rate</Label>
                     <Select value={formData.gstPercent} onValueChange={(value) => setFormData({ ...formData, gstPercent: value })}>
                       <SelectTrigger className="h-12 border-2 border-gray-300 focus:border-blue-500 bg-white">
                         <SelectValue placeholder="Select GST rate" />
@@ -653,12 +653,43 @@ const handleExportReport = async () => {
                   </div>
                 )}
 
+                {/* File Upload Input (Hidden) */}
+                <input
+                  type="file"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+
                 <div className="flex items-center justify-between pt-6 border-t border-gray-100">
-                  <Button variant="outline" type="button" className="h-12 px-8 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-black font-semibold">
+                  <Button variant="outline" type="button" className="h-12 px-8 border-2 border-gray-300 hover:border-blue-400 hover:bg-blue-50 text-black font-semibold" onClick={() => fileInputRef.current.click()}>
                     <Upload className="mr-2 h-4 w-4" />
                     Attach Receipts
                   </Button>
-                  
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-2 space-y-1 text-sm text-gray-700">
+                      {selectedFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between gap-2 bg-gray-100 px-3 py-1 rounded-md">
+                        <div className="truncate">
+                          {file.name}{" "}
+                          <span className="text-xs text-gray-500">
+                            ({(file.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(index)}
+                        className="text-red-500 hover:text-red-700 text-sm"
+                      >
+                      ❌
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                )}
+
+
                   <Button type="submit" className="h-12 px-8 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg">
                     <Plus className="mr-2 h-4 w-4" />
                     Add Expense
