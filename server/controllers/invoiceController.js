@@ -27,23 +27,38 @@ exports.createInvoice = async (req, res) => {
     } = req.body;
 
     const safeParse = (json) => {
-  try {
-    return JSON.parse(json);
-  } catch {
-    return {}; 
-  }
-};
+      try {
+        return JSON.parse(json);
+      } catch {
+        return {}; 
+      }
+    };
 
+const parsedBillTo = safeParse(billTo);
 const parsedSummary = safeParse(summary);
+
+let clientId = null;
+
+    if (billToDetail) {
+      const existingClient = await Client.findOne({
+        _id: billToDetail,
+        user: req.user._id,
+      });
+
+      if (existingClient) {
+        clientId = existingClient._id;
+      }
+    }
+
     const invoice = new Invoice({
       user: req.user._id,
-      billToDetail: billToDetail,
+      billToDetail: clientId,
       invoiceNumber,
       invoiceDate,
       dueDate,
       businessLogo: req.files['businessLogo'] ? req.files['businessLogo'][0].path : '',
       billFrom: safeParse(billFrom),
-      billTo: safeParse(billTo),
+      billTo: parsedBillTo,
       shipping: safeParse(shipping),
       gstConfig: safeParse(gstConfig),
       currency,
@@ -59,29 +74,52 @@ const parsedSummary = safeParse(summary);
       status: status || "Draft",
     });
 
-    await invoice.save();
-  /*
-    if (saveAsClient === 'true' && parsedBillTo?.email) {
-  const existingClient = await Client.findOne({
-    email: parsedBillTo.email,
+  const hasCompleteManualBillTo = (bill) => {
+  const required = ["businessName", "address", "city", "state", "pincode"];
+  return (
+    bill &&
+    required.every((k) => typeof bill[k] === "string" && bill[k].trim())
+  );
+};
+
+if (saveAsClient === "true" && !clientId && hasCompleteManualBillTo(parsedBillTo)) {
+  const existing = await Client.findOne({
+    name: parsedBillTo.businessName,
     user: req.user._id,
   });
 
-  if (!existingClient) {
-    const fullAddress = `${parsedBillTo.address || ""}, ${parsedBillTo.city || ""}, ${parsedBillTo.state || ""} - ${parsedBillTo.pincode || ""}`;
-
-    await Client.create({
+  if (!existing) {
+    const newClient = await Client.create({
       user: req.user._id,
       name: parsedBillTo.businessName || "",
-      email: parsedBillTo.email,
+      email: parsedBillTo.email || "",
       phone: parsedBillTo.phone || "",
-      address: fullAddress.trim(),
       gstNumber: parsedBillTo.gstin || "",
-      company: parsedBillTo.businessName || "", 
-      status: "Active", 
+      pan: parsedBillTo.pan || "",
+      address: parsedBillTo.address || "",
+      city: parsedBillTo.city || "",
+      state: parsedBillTo.state || "",
+      pincode: parsedBillTo.pincode || "",
+      country: parsedBillTo.country || "India",
+      status: "Active",
     });
+
+    invoice.billToDetail = newClient._id;
+  } else {
+    invoice.billToDetail = existing._id;
   }
-} */
+}
+
+
+if (!invoice.billToDetail && !hasCompleteManualBillTo(invoice.billTo)) {
+  return res.status(400).json({
+    message:
+      "Missing or incomplete recipient info. Select an existing client or fill every Bill‑To field.",
+  });
+}
+
+
+await invoice.save();
 
     res.status(201).json({ message: "Invoice created", invoice });
   } catch (error) {
@@ -237,3 +275,5 @@ exports.deleteInvoice = async (req, res) => {
      res.send("PDF would be generated here");
   }
 };*/
+
+

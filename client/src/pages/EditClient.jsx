@@ -16,6 +16,12 @@ const AddEditClient = () => {
     phone: '',
     gstNumber: '',
     address: '',
+    gstin: '',
+    city: '',
+    state: '',
+    pincode: '',
+    country: '',
+    pan: '',
   });
 
   useEffect(() => {
@@ -31,7 +37,13 @@ const AddEditClient = () => {
           industry: data.industry || '',
           phone: data.phone || '',
           gstNumber: data.gstNumber || '',
+          gstin: data.gstin || '',
           address: data.address || '',
+          city: data.city || '',
+          state: data.state || '',
+          pincode: data.pincode || '',
+          country: data.country || '',
+          pan: data.pan || '',
         });
         } catch (err) {
           console.error('Failed to fetch client', err);
@@ -141,15 +153,63 @@ const AddEditClient = () => {
             />
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block mb-1 font-medium">Address</label>
-            <textarea
-              name="address"
-              value={clientData.address}
+          <div>
+            <label className="block mb-1 font-medium">PAN</label>
+            <input
+              type="text"
+              name="pan"
+              value={clientData.pan}
               onChange={handleChange}
               className="w-full border rounded px-3 py-2"
-              rows={3}
-              placeholder="123 Main St, City, Country"
+              placeholder="ABCDE1234F"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">City</label>
+            <input
+              type="text"
+              name="city"
+              value={clientData.city}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Mumbai"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">State</label>
+            <input
+              type="text"
+              name="state"
+              value={clientData.state}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+              placeholder="Maharashtra"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">PIN / ZIP</label>
+            <input
+              type="text"
+              name="pincode"
+              value={clientData.pincode}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+              placeholder="400001"
+            />
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">Country</label>
+            <input
+              type="text"
+              name="country"
+              value={clientData.country}
+              onChange={handleChange}
+              className="w-full border rounded px-3 py-2"
+              placeholder="India"
             />
           </div>
 

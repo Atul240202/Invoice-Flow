@@ -11,6 +11,7 @@ import CreateInvoice from './pages/CreateInvoice';
 import ClientManagement from './pages/ClientManagement';
 import AddEditClient from './pages/EditClient';
 import InvoiceHistory from './pages/ClientHistory';
+import ClientDetails from './pages/ClientDetails';
 import BankingPreviewStep from './components/invoice/BankingPreviewStep';
 import { Toaster } from "sonner";
 import ExpenseTracker from './pages/ClientExpenses';
@@ -34,6 +35,7 @@ function App() {
   <Route path="create-invoice/:id/edit" element={<CreateInvoice />} />
   <Route path="clients" element={<ClientManagement />} />
   <Route path="clients/new" element={<AddEditClient />} />
+  <Route path="clients/:id" element={<ClientDetails />} />
   <Route path="clients/:id/edit" element={<AddEditClient />} />
   <Route path="invoices" element={<InvoiceHistory />} />
   <Route path="invoices/:id/preview" element={<BankingPreviewStep />} />
