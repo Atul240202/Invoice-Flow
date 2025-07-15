@@ -25,8 +25,65 @@ router.get('/summary', authMiddleware, async (req, res) => {
   try {
     const userId = req.user._id;
     const totalClients = await Client.countDocuments({ user: userId });
-    const invoices = await Invoice.find({user: userId}).populate("billTo")
-    res.json({ totalClients });
+    const topN = 5;
+
+    const topClients = await Invoice.aggregate([
+      { $match: { user: userId } },
+      {
+        $group: {
+          _id: "$billToDetail",   
+          revenue: { $sum: "$summary.totalAmount" }
+        }
+      },
+      { $sort: { revenue: -1 } },
+      { $limit: topN },
+      {
+        $lookup: {
+          from: "clients",
+          localField: "_id",
+          foreignField: "_id",
+          as: "client"
+        }
+      },
+      { $unwind: "$client" },
+      {
+        $project: {
+          _id: 0,
+          name: "$client.name",
+          value: { $round: ["$revenue", 2] }   
+        }
+      }
+    ]);
+
+     const topClientIds = topClients.map(c => c.name);
+
+    const others = await Invoice.aggregate([
+      { $match: { user: userId } },
+      {
+        $lookup: {
+          from: "clients",
+          localField: "billToDetail",
+          foreignField: "_id",
+          as: "client"
+        }
+      },
+      { $unwind: "$client" },
+      { $match: { "client.name": { $nin: topClientIds } } },
+      {
+        $group: {
+          _id: null,
+          revenue: { $sum: "$summary.totalAmount" }
+        }
+      }
+    ]);
+    if (others.length && others[0].revenue > 0) {
+      topClients.push({
+        name: "Others",
+        value: Math.round(others[0].revenue * 100) / 100
+      });
+    }
+
+    res.json({ totalClients, distribution: topClients });
   } catch (err) {
     console.error("Client Summary Error:", err);
     res.status(500).json({ message: "Failed to fetch client summary" });
@@ -39,34 +96,48 @@ router.get("/top", authMiddleware, async (req, res) => {
     const userId = req.user._id;
     const limit = parseInt(req.query.limit) || 4;
 
-    const clients = await Client.aggregate([
-      { $match: { user: userId } },
+    const topClients = await Invoice.aggregate([
+      {
+        $match: { user: userId }
+      },
+      {
+        $group: {
+          _id: "$billToDetail", // Group by client ID
+          invoiceCount: { $sum: 1 },
+          totalAmount: { $sum: "$summary.totalAmount" },
+          lastInvoiceDate: { $max: "$date" }
+        }
+      },
+      {
+        $sort: { totalAmount: -1, lastInvoiceDate: -1 } // Primary: amount, Secondary: recency
+      },
+      { $limit: limit },
       {
         $lookup: {
-          from: "invoices",
+          from: "clients",
           localField: "_id",
-          foreignField: "billTo",
-          as: "invoices"
+          foreignField: "_id",
+          as: "client"
         }
       },
+      { $unwind: "$client" },
       {
-        $addFields: {
-          totalAmount: { $sum: "$invoices.summary.totalAmount" },
-          invoiceCount: { $size: "$invoices" }
+        $project: {
+          name: "$client.name",
+          status: "$client.status",
+          invoices: "$invoiceCount",
+          amount: {
+            $concat: [
+              "₹",
+              { $toString: { $round: ["$totalAmount", 2] } }
+            ]
+          },
+          lastInvoiceDate: 1
         }
-      },
-      { $sort: { totalAmount: -1 } },
-      { $limit: limit }
+      }
     ]);
 
-    const formatted = clients.map(c => ({
-      name: c.name,
-      amount: `₹${c.totalAmount?.toLocaleString() || 0}`,
-      invoices: c.invoiceCount,
-      status: c.status || "Active"
-    }));
-
-    res.json(formatted);
+    res.json(topClients);
   } catch (err) {
     console.error("Top Clients Error:", err);
     res.status(500).json({ message: "Failed to fetch top clients" });

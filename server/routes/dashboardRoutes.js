@@ -16,10 +16,15 @@ router.get("/stats", async (req, res) => {
       return sum + (inv.summary?.totalAmount || inv.amount || 0);
     }, 0);
 
-    const pendingInvoices = invoices.filter(inv => inv.status === "Pending");
+    const pendingInvoices = invoices.filter(inv => inv.status !== "Paid");
     const pendingAmount = pendingInvoices.reduce((sum, inv) => {
-      return sum + (inv.summary?.totalAmount || inv.amount || 0);
+    const total = inv.summary?.totalAmount ?? inv.amount ?? 0;
+    const received = inv.summary?.amountReceived ?? inv.amountReceived ?? 0;
+      return sum + Math.max(total - received, 0);
     }, 0);
+
+
+
 
     const totalClients = await Client.countDocuments({ user: userId });
 
