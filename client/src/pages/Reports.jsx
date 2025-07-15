@@ -5,69 +5,114 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "../components/Badge";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, LineChart, Line, ResponsiveContainer } from "recharts";
 import { TrendingUp, TrendingDown, IndianRupee, FileText, Users, Calendar } from "lucide-react";
+import { useEffect } from "react";
+import axios from "axios";
 
 const Reports = () => {
   const [timeRange, setTimeRange] = useState("thisMonth");
 
-  
-  const fullMonthlyData = [
-    { month: "Jan", revenue: 45000, invoices: 12, clients: 8 },
-    { month: "Feb", revenue: 52000, invoices: 15, clients: 10 },
-    { month: "Mar", revenue: 48000, invoices: 13, clients: 9 },
-    { month: "Apr", revenue: 61000, invoices: 18, clients: 12 },
-    { month: "May", revenue: 58000, invoices: 16, clients: 11 },
-    { month: "Jun", revenue: 67000, invoices: 20, clients: 14 }
-  ];
+  const token = localStorage.getItem("token");
+
+  const [fullMonthlyData, setFullMonthlyData] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalInvoices, setTotalInvoices] = useState(0);
+  const [totalClients, setTotalClients] = useState(0);
+
+  useEffect(() => {
+  const fetchMonthlyTrend = async () => {
+    try {
+       const headers = {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      };
+      const response = await axios.get("http://localhost:5000/api/reports/monthly-trend", {headers});
+
+      const trend = response.data?.monthlyTrend || [];
+
+      const chartFormatted = trend.map((entry) => ({
+        month: entry.month,
+        revenue: entry.income,
+        expenses: entry.expenses,
+        itc: entry.itc,
+        invoices: entry.invoices || 0, 
+        clients: entry.clients || 0, 
+      }));
+
+      setFullMonthlyData(chartFormatted);
+
+      const totalRevenue = trend.reduce((sum, m) => sum + m.income, 0);
+      setTotalRevenue(totalRevenue);
+
+      const invoiceRes = await axios.get("http://localhost:5000/api/invoices/summary", { headers });
+      setTotalInvoices(invoiceRes.data.totalInvoices);
+
+      const clientRes = await axios.get("http://localhost:5000/api/clients/summary", { headers });
+       setTotalClients(clientRes.data.totalClients);
+       setClientDistribution(clientRes.data.distribution || []);
+
+    } catch (error) {
+      console.error("Failed to fetch monthly trend:", error);
+    }
+  };
+
+  fetchMonthlyTrend();
+}, []);
+
 
   const filterMonthlyData = (range) => {
     switch (range) {
       case "thisWeek":
-        return fullMonthlyData.slice(-1); // only June
+        return fullMonthlyData.slice(-1); 
       case "thisMonth":
-        return fullMonthlyData.slice(-1); // only June
+        return fullMonthlyData.slice(-1); 
       case "lastMonth":
-        return fullMonthlyData.slice(-2, -1); // May
+        return fullMonthlyData.slice(-2, -1); 
       case "thisQuarter":
-        return fullMonthlyData.slice(-3); // Apr, May, Jun
+        return fullMonthlyData.slice(-3); 
       case "thisYear":
-        return fullMonthlyData; // all data
+        return fullMonthlyData; 
       default:
         return fullMonthlyData;
     }
   };
 
   const filteredMonthlyData = useMemo(() => filterMonthlyData(timeRange), [timeRange]);
-
-  // Keep client distribution static, or also apply a filter similarly
-  const clientDistribution = [
-    { name: "ABC Industries", value: 30, invoices: 8 },
-    { name: "XYZ Corp", value: 25, invoices: 6 },
-    { name: "Digital Solutions", value: 20, invoices: 5 },
-    { name: "Tech Innovators", value: 15, invoices: 4 },
-    { name: "Others", value: 10, invoices: 3 }
-  ];
+  const [clientDistribution, setClientDistribution] = useState([]);
 
   const colors = ['#3B82F6', '#22C55E', '#F97316', '#8B5CF6', '#EC4899'];
 
   const computedStats = useMemo(() => {
-  const totalRevenue = filteredMonthlyData.reduce((sum, m) => sum + m.revenue, 0);
-  const totalInvoices = filteredMonthlyData.reduce((sum, m) => sum + m.invoices, 0);
-  const totalClients = filteredMonthlyData.reduce((sum, m) => sum + m.clients, 0);
+
+    const pctChange = (curr = 0, prev = 0) => {
+      if(!prev){
+        return "0.0%";
+      }
+      const diff = ((curr - prev) / prev) * 100;
+      return `${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%`
+    }
+
+    const curr = fullMonthlyData.at(-1) || {};
+    const prev = fullMonthlyData.at(-2) || {};
+
+    const revChange     = pctChange(curr.revenue,  prev.revenue);
+    const invChange     = pctChange(curr.invoices, prev.invoices);
+    const clientChange  = pctChange(curr.clients,  prev.clients);
+
+    const isPos = (str) => !str.startsWith("-");
 
   return [
     {
       title: "Total Revenue",
       value: `₹${totalRevenue.toLocaleString()}`,
-      change: "+12.5%", // dynamic if needed
-      isPositive: true,
+      change: revChange, 
+      isPositive: isPos(revChange),
       icon: IndianRupee,
       color: "from-green-500 to-green-600"
     },
     {
       title: "Invoices Generated",
       value: `${totalInvoices}`,
-      change: "+8.2%",
-      isPositive: true,
+      change: invChange,
+      isPositive: isPos(invChange),
       icon: FileText,
       color: "from-blue-500 to-blue-600"
     },
@@ -88,43 +133,8 @@ const Reports = () => {
       color: "from-orange-500 to-orange-600"
     }
   ];
-}, [filteredMonthlyData]);
+}, [totalRevenue, totalInvoices, totalClients, filteredMonthlyData]);
 
-
-  const stats = [
-    {
-      title: "Total Revenue",
-      value: "₹4,52,840",
-      change: "+12.5%",
-      isPositive: true,
-      icon: IndianRupee,
-      color: "from-green-500 to-green-600"
-    },
-    {
-      title: "Invoices Generated",
-      value: "127",
-      change: "+8.2%",
-      isPositive: true,
-      icon: FileText,
-      color: "from-blue-500 to-blue-600"
-    },
-    {
-      title: "Active Clients",
-      value: "34",
-      change: "+15.3%",
-      isPositive: true,
-      icon: Users,
-      color: "from-purple-500 to-purple-600"
-    },
-    {
-      title: "Avg. Payment Time",
-      value: "18 days",
-      change: "-2.1 days",
-      isPositive: true,
-      icon: Calendar,
-      color: "from-orange-500 to-orange-600"
-    }
-  ];
 
   const exportToPDF = async () => {
   try {
@@ -177,7 +187,7 @@ const Reports = () => {
   onClick={exportToPDF}
   className="h-12 px-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg transition-all duration-200"
 >
-  Export Report
+  Export 
 </Button>
 
         </div>

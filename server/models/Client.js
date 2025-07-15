@@ -1,4 +1,3 @@
-// models/Client.js
 const mongoose = require("mongoose");
 
 const clientSchema = new mongoose.Schema(
@@ -14,7 +13,15 @@ const clientSchema = new mongoose.Schema(
     industry: String,
     phone: String,
     address: String,
+    city: String,
+    state: String,
+    pincode: String,
+    country: {
+      type: String,
+      default: "India"
+    },
     gstNumber: String,
+    pan: String,
     totalRevenue: {
       type: Number,
       default: 0,

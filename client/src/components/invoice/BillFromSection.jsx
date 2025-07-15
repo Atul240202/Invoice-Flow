@@ -7,13 +7,28 @@ import { X } from "lucide-react";
 import axios from "axios";
 
 export const BillFromSection = ({ billFromData, setBillFromData }) => {
-  const indianStates = [/*... same as before ...*/];
+    const indianStates = [
+    "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
+    "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
+    "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
+    "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
+  ];
 
-  const [showEmail, setShowEmail] = useState(!!billFromData.email);
-  const [showPhone, setShowPhone] = useState(!!billFromData.phone);
-  const [showGST, setShowGST] = useState(!!billFromData.gstin);
-  const [showPAN, setShowPAN] = useState(!!billFromData.pan);
-  const [customFields, setCustomFields] = useState(billFromData.customFields || []);
+const [showEmail, setShowEmail] = useState(false);
+const [showPhone, setShowPhone] = useState(false);
+const [showGST,  setShowGST]  = useState(false);
+const [showPAN,  setShowPAN]  = useState(false);
+const [customFields, setCustomFields] = useState([]);
+
+useEffect(() => {
+  setShowEmail(!!billFromData.email);
+  setShowPhone(!!billFromData.phone);
+  setShowGST  (!!billFromData.gstin);
+  setShowPAN  (!!billFromData.pan);
+  setCustomFields(billFromData.customFields || []);
+}, [billFromData]);
+
+
 
   const [errors, setErrors] = useState({ email: "", phone: "", gstin: "", pan: "" });
 
@@ -37,23 +52,6 @@ export const BillFromSection = ({ billFromData, setBillFromData }) => {
     }
     setErrors(prev => ({ ...prev, [field]: error }));
   };
-
-  useEffect(() => {
-    const fetchBillFrom = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        if (res.data?.billFrom) {
-          setBillFromData(res.data.billFrom);
-          setCustomFields(res.data.billFrom.customFields || []);
-        }
-      } catch (err) {
-        console.error("Failed to fetch bill-from data", err);
-      }
-    };
-    fetchBillFrom();
-  }, [setBillFromData]);
 
   const handleCustomFieldChange = (index, field, value) => {
     const updated = [...customFields];
@@ -83,7 +81,7 @@ export const BillFromSection = ({ billFromData, setBillFromData }) => {
       </CardHeader>
       <CardContent className="space-y-4">
         <Select
-          value={billFromData.country}
+          value={billFromData.country ?? ""}
           onValueChange={val => setBillFromData(prev => ({ ...prev, country: val }))}
         >
           <SelectTrigger className="h-10 border-gray-300">
@@ -97,32 +95,32 @@ export const BillFromSection = ({ billFromData, setBillFromData }) => {
         </Select>
 
         <Input
-          value={billFromData.businessName}
+          value={billFromData.businessName ?? ""}
           onChange={e => setBillFromData(prev => ({ ...prev, businessName: e.target.value }))}
           placeholder="Your Business / Freelancer Name (Required)"
         />
 
         <Input
-          value={billFromData.address}
+          value={billFromData.address ?? ""}
           onChange={e => setBillFromData(prev => ({ ...prev, address: e.target.value }))}
           placeholder="Address (optional)"
         />
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            value={billFromData.city}
+            value={billFromData.city ?? ""}
             onChange={e => setBillFromData(prev => ({ ...prev, city: e.target.value }))}
             placeholder="City (optional)"
           />
           <Input
-            value={billFromData.pincode}
+            value={billFromData.pincode ?? ""}
             onChange={e => setBillFromData(prev => ({ ...prev, pincode: e.target.value }))}
             placeholder="Postal Code / Zip Code"
           />
         </div>
 
         <Select
-          value={billFromData.state || ""} 
+          value={billFromData.state ?? ""} 
           onValueChange={(val) => setBillFromData(prev => ({ ...prev, state: val }))}
         >
           <SelectTrigger className="h-10 border-gray-300">

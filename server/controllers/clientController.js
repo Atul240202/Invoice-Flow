@@ -22,17 +22,23 @@ exports.syncClientsFromInvoices = async (req, res) => {
           industry: bt.industry || "General",
           phone: bt.phone,
           gstin: bt.gstin,
-          address: `${bt.address}, ${bt.city}, ${bt.state}, ${bt.pincode}`,
+          pan:           bt.pan,
+          address:       bt.address,
+          city:          bt.city,
+          state:         bt.state,
+          pincode:       bt.pincode,
+          country:       bt.country || "India",
           status: "Active",
-          lastActivity: inv.date || new Date(),
-          totalRevenue: inv.grandTotal || 0,
+          lastActivity: when || inv.date || new Date(),
+          totalRevenue: amount || inv.grandTotal || 0,
           invoiceCount: 1
         });
       } else {
-        const existing = map.get(key);
-        existing.totalRevenue += inv.grandTotal || 0;
-        existing.invoiceCount += 1;
-        map.set(key, existing);
+        const ex = map.get(key);
+        ex.totalRevenue  += amount;
+        ex.totalInvoices += 1;
+        if (when > ex.lastActivity) ex.lastActivity = when;
+        map.set(key, ex);
       }
     });
 
@@ -41,7 +47,7 @@ exports.syncClientsFromInvoices = async (req, res) => {
     // Upsert into Client collection
     for (const clientData of uniqueClients) {
       await Client.findOneAndUpdate(
-        { user: userId, email: clientData.email },
+        { user: userId, email: clientData.email || undefined, name: clientData.name},
         { $set: clientData },
         { upsert: true, new: true }
       );

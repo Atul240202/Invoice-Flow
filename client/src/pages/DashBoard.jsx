@@ -1,10 +1,11 @@
-
-
+import { useState, useEffect } from "react";
+import api from "../utils/api";
 import { AIInsightCard } from "../components/AIInsightCard";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
 import { Button } from "../components/button";
 import { StatCard } from "../components/Statcard";
 import { Settings } from "lucide-react";
+import { useToast } from "../hooks/toast";
 
 import { 
   IndianRupee, 
@@ -19,36 +20,28 @@ import {
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
-  const stats = [
-    {
-      title: "Total Sales",
-      value: "₹4,52,840",
-      subtitle: "This month",
-      icon: IndianRupee,
-      trend: { value: "12.5%", isPositive: true }
-    },
-    {
-      title: "Pending Payments",
-      value: "₹89,430",
-      subtitle: "7 invoices",
-      icon: Clock,
-      trend: { value: "5.2%", isPositive: false }
-    },
-    {
-      title: "Total Clients",
-      value: "34",
-      subtitle: "Active clients",
-      icon: Users,
-      trend: { value: "8.1%", isPositive: true }
-    },
-    {
-      title: "Invoices Created",
-      value: "127",
-      subtitle: "This month",
-      icon: FileText,
-      trend: { value: "15.3%", isPositive: true }
+  const [stats, setStats] = useState(null);
+  const [topClients, setTopClients] = useState([]);
+  const [recentInvoices, setRecentInvoices] = useState([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    async function loadDashboard() {
+      try {
+        const [statsRes, topRes, recRes] = await Promise.all([
+          api.get("/dashboard/stats"),
+          api.get("/clients/top?limit=4"),
+          api.get("/invoices/recent?limit=4"),
+        ]);
+        setStats(statsRes.data);
+        setTopClients(topRes.data);
+        setRecentInvoices(recRes.data);
+      } catch (err) {
+        toast({ title: "Error", description: "Failed to load dashboard data." });
+      }
     }
-  ];
+    loadDashboard();
+  }, []);
 
   const aiInsights = [
     {
@@ -65,23 +58,31 @@ const Dashboard = () => {
     }
   ];
 
-  const topClients = [
-    { name: "ABC Industries", amount: "₹1,25,000", invoices: 8, status: "Active" },
-    { name: "XYZ Corp", amount: "₹98,500", invoices: 5, status: "Pending" },
-    { name: "Digital Solutions Ltd", amount: "₹87,300", invoices: 6, status: "Active" },
-    { name: "Tech Innovators", amount: "₹76,800", invoices: 4, status: "Active" }
-  ];
-
-  const recentInvoices = [
-    { id: "INV-2024-001", client: "ABC Industries", amount: "₹45,000", date: "2024-01-15", status: "Paid" },
-    { id: "INV-2024-002", client: "XYZ Corp", amount: "₹32,500", date: "2024-01-14", status: "Pending" },
-    { id: "INV-2024-003", client: "Digital Solutions", amount: "₹28,900", date: "2024-01-13", status: "Sent" },
-    { id: "INV-2024-004", client: "Tech Innovators", amount: "₹55,200", date: "2024-01-12", status: "Overdue" }
-  ];
-
   const handleSendToCA = () => {
     console.log("Sending reports to CA...");
   };
+  let enhancedStats = null;
+if (stats) {
+  enhancedStats = {
+    totalSales: {
+      ...stats.totalSales,
+      icon: IndianRupee
+    },
+    pendingPayments: {
+      ...stats.pendingPayments,
+      icon: Clock
+    },
+    totalClients: {
+      ...stats.totalClients,
+      icon: Users
+    },
+    invoicesCreated: {
+      ...stats.invoicesCreated,
+      icon: FileText
+    },
+  };
+}
+
 
   return (
     <div className="space-y-6 animate-fade-in text-slate-800 bg-white">
@@ -100,12 +101,6 @@ const Dashboard = () => {
             Create Invoice
           </Link>
         </Button>
-        
-        <Button asChild className="bg-gray-200 text-slate-700 hover:bg-gray-300 hover:shadow transition-all duration-200">
-          <Link to="/settings">
-          <Settings className="h-4 w-4" />
-          </Link>
-        </Button>
 
           <Button asChild className="bg-indigo-600 hover:bg-indigo-700 text-white hover:shadow-lg hover:scale-105 transition-all duration-200">
           <Link to="/logout">
@@ -115,11 +110,17 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Grid */}
+      {stats ? (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <StatCard key={index} {...stat} />
-        ))}
+        {["totalSales", "pendingPayments", "totalClients", "invoicesCreated"].map((key) => {
+          const cardProps = enhancedStats?.[key];
+          return cardProps ? <StatCard key={key} {...cardProps} /> : null;
+        })}
       </div>
+      ) : (
+       <div>Loading stats...</div>
+      )}
+      
 
       {/* AI Insights */}
       <AIInsightCard title="Smart Business Insights" insights={aiInsights} />

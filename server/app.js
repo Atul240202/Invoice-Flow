@@ -49,9 +49,81 @@ app.use("/api/expenses", expenseRoutes);
 
 app.use("/api/reports", require("./routes/reportRoutes"));
 
-
+app.use("/api/dashboard", require("./routes/dashboardRoutes"));
 
 app.post('/api/invoices/:id/download-pdf', async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+
+    const invoice = await Invoice.findById(invoiceId)
+      .populate("billFrom")
+      .populate("billTo");
+
+    if (!invoice || !invoice.billFrom || !invoice.billTo) {
+      return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
+    }
+
+    const invoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      date: invoice.invoiceDate.toLocaleDateString("en-IN"),
+      dueDate: invoice.dueDate.toLocaleDateString("en-IN"),
+      items: invoice.items,
+      gstRate: invoice.gstRate,
+      igst: invoice.igst,
+      cgst: invoice.cgst,
+      sgst: invoice.sgst,
+      discount: invoice.discount,
+      additionalCharges: invoice.additionalCharges,
+      businessLogo: invoice.businessLogo,
+      signature: invoice.signature,
+      qrCode: invoice.qrCode,
+      terms: invoice.terms,
+
+      billFromData: {
+        businessName: invoice.billFrom.businessName,
+        address: invoice.billFrom.address,
+        city: invoice.billFrom.city,
+        state: invoice.billFrom.state,
+        pincode: invoice.billFrom.pincode,
+        gstin: invoice.billFrom.gstin,
+        pan: invoice.billFrom.pan,
+      },
+      billToData: {
+        businessName: invoice.billTo.businessName,
+        address: invoice.billTo.address,
+        city: invoice.billTo.city,
+        state: invoice.billTo.state,
+        pincode: invoice.billTo.pincode,
+        gstin: invoice.billTo.gstin,
+      }
+    };
+
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    const htmlContent = generateInvoiceHTML(invoiceData);
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({ format: 'A4',
+         printBackground: true,
+     });
+    await browser.close();
+
+    const filename = `invoice-${invoice.invoiceNumber || invoice._id}.pdf`;
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error("PDF generation error:", err);
+    res.status(500).json({ error: 'Failed to generate PDF.' });
+  }
+});
+
+app.get('/api/invoices/:id/download-pdf', async (req, res) => {
   try {
     const invoiceId = req.params.id;
 

@@ -7,7 +7,7 @@ import { Button } from "../button";
 import { X } from "lucide-react";
 import api from "../../utils/api";
 
-export const BillToSection = ({ billToData, setBillToData }) => {
+export const BillToSection = ({ billToData, setBillToData, selectedClientId, setSelectedClientId }) => {
   const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
     "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
@@ -15,14 +15,12 @@ export const BillToSection = ({ billToData, setBillToData }) => {
     "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
   ];
 
-  // Show/hide states for optional fields
   const [showEmail, setShowEmail] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showGST, setShowGST] = useState(false);
   const [showPAN, setShowPAN] = useState(false);
   const [customFields, setCustomFields] = useState([]);
   const [clients, setClients] = useState([]);
-  const [selectedClientId, setSelectedClientId] = useState("");
 
 
   const addCustomField = () => setCustomFields([...customFields, { label: "", value: "" }]);
@@ -111,7 +109,7 @@ const handleClientSelect = (id) => {
               value={billToData.address}
               onChange={(e) => setBillToData(prev => ({ ...prev, address: e.target.value }))}
               className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="Address (optional)"
+              placeholder="Address"
             />
           </div>
 
@@ -120,7 +118,7 @@ const handleClientSelect = (id) => {
               value={billToData.city}
               onChange={(e) => setBillToData(prev => ({ ...prev, city: e.target.value }))}
               className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="City (optional)"
+              placeholder="City"
             />
             <Input
               value={billToData.pincode}
@@ -133,7 +131,7 @@ const handleClientSelect = (id) => {
           <div className="space-y-2">
             <Select value={billToData.state} onValueChange={(value) => setBillToData(prev => ({ ...prev, state: value }))}>
               <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
-                <SelectValue placeholder="State (optional)" />
+                <SelectValue placeholder="State" />
               </SelectTrigger>
               <SelectContent className="bg-white">
                 {indianStates.map((state) => (

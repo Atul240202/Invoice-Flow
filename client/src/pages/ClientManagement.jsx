@@ -30,7 +30,12 @@ const ClientManagement = () => {
     industry: "",
     phone: "",
     address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "",
     gstNumber: "",
+    pan: ""
   });
   const [invoiceData, setInvoiceData] = useState({ invoices: [] });
   const { invoices } = invoiceData;
@@ -72,10 +77,13 @@ const ClientManagement = () => {
 
 const clientStatsMap = useMemo(() => {
   return invoices.reduce((acc, inv) => {
-    const clientId = inv.billToDetail?._id;
+    const clientId = (inv.billToDetail && inv.billToDetail._id) ||
+    inv.billToDetail || null;
+
+
     if (!clientId) return acc;
 
-    const invoiceDate = new Date(inv.date); 
+    const invoiceDate = new Date(inv.invoiceDate || inv.date || inv.createdAt); 
 
     if (!acc[clientId]) {
       acc[clientId] = {
@@ -83,14 +91,17 @@ const clientStatsMap = useMemo(() => {
         totalInvoices: 0,
         latestInvoiceDate: invoiceDate,
       };
-    } else {
+    } 
+
+       acc[clientId].totalRevenue +=
+      (inv.summary?.totalAmount) ??
+      inv.amount ??                 
+      0;
+      acc[clientId].totalInvoices += 1;
+
       if (invoiceDate > acc[clientId].latestInvoiceDate) {
         acc[clientId].latestInvoiceDate = invoiceDate;
       }
-    }
-
-    acc[clientId].totalRevenue += inv.summary?.totalAmount || 0;
-    acc[clientId].totalInvoices += 1;
 
     return acc;
   }, {});
@@ -101,9 +112,14 @@ const clientStatsMap = useMemo(() => {
 
   const [editingClient, setEditingClient] = useState(null);
 
+const uniqueIndustries = Array.from(
+  new Set(
+    clients
+      .map(c => c.industry)
+      .filter(Boolean)
+  )
+).sort();
 
-  // Get unique industry names for filter
-  const uniqueIndustries = Array.from(new Set(clients.map(client => client.industry))).sort();
 
   const filteredClients = clients.filter(client => {
     const matchesSearch =
@@ -111,7 +127,7 @@ const clientStatsMap = useMemo(() => {
       client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.company.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = statusFilter === "all" || client.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesStatus = statusFilter === "all" || (client.status?.toLowerCase() === statusFilter.toLowerCase());
     const matchesIndustry = industryFilter === "all" || client.industry === industryFilter;
 
     return matchesSearch && matchesStatus && matchesIndustry;
@@ -122,9 +138,9 @@ const clientStatsMap = useMemo(() => {
 };
 
 const getAvgInvoiceValue = () => {
-  const uniqueClientIds = [...new Set(invoices.map(inv => inv.billedTo?._id))];
-  return uniqueClientIds.length > 0
-    ? getTotalRevenue() / uniqueClientIds.length
+  const totalInvoices = Array.isArray(invoices) ? invoices.length : 0;
+  return totalInvoices > 0
+    ? getTotalRevenue() / totalInvoices
     : 0;
 };
   
@@ -209,7 +225,12 @@ const handleAddClient = async (e) => {
       industry: "",
       phone: "",
       address: "",
+      city: "",
+      state: "",
+      pincode: "",
+      country: "",
       gstNumber: "",
+      pan: ""
     });
     setShowAddForm(false);
   } catch (err) {
@@ -427,10 +448,56 @@ const handleAddClient = async (e) => {
                 <Textarea
                   value={newClient.address}
                   onChange={(e) => setNewClient(prev => ({ ...prev, address: e.target.value }))}
-                  placeholder="Complete business address including city, state, and PIN code"
+                  placeholder="Complete business address "
                   className="min-h-[100px] text-base border-2 border-gray-300 input-hover bg-white placeholder:text-gray-500 text-black font-medium resize-none"
                 />
               </div>
+              <div className="space-y-3">
+  <label className="text-sm font-bold text-black uppercase tracking-wider">City</label>
+  <Input
+    value={newClient.city}
+    onChange={(e) => setNewClient(prev => ({ ...prev, city: e.target.value }))}
+    placeholder="City"
+    className="h-12 text-base border-2 border-gray-300 input-hover bg-white placeholder:text-gray-500 text-black font-medium"
+  />
+</div>
+<div className="space-y-3">
+  <label className="text-sm font-bold text-black uppercase tracking-wider">State</label>
+  <Input
+    value={newClient.state}
+    onChange={(e) => setNewClient(prev => ({ ...prev, state: e.target.value }))}
+    placeholder="State"
+    className="h-12 text-base border-2 border-gray-300 input-hover bg-white placeholder:text-gray-500 text-black font-medium"
+  />
+</div>
+<div className="space-y-3">
+  <label className="text-sm font-bold text-black uppercase tracking-wider">Pincode</label>
+  <Input
+    value={newClient.pincode}
+    onChange={(e) => setNewClient(prev => ({ ...prev, pincode: e.target.value }))}
+    placeholder="e.g., 400001"
+    className="h-12 text-base border-2 border-gray-300 input-hover bg-white placeholder:text-gray-500 text-black font-medium"
+  />
+</div>
+<div className="space-y-3">
+  <label className="text-sm font-bold text-black uppercase tracking-wider">Country</label>
+  <Input
+    value={newClient.country}
+    onChange={(e) => setNewClient(prev => ({ ...prev, country: e.target.value }))}
+    placeholder="e.g., India"
+    className="h-12 text-base border-2 border-gray-300 input-hover bg-white placeholder:text-gray-500 text-black font-medium"
+  />
+</div>
+<div className="space-y-3">
+  <label className="text-sm font-bold text-black uppercase tracking-wider">PAN</label>
+  <Input
+    value={newClient.pan}
+    onChange={(e) => setNewClient(prev => ({ ...prev, pan: e.target.value }))}
+    placeholder="e.g., ABCDE1234F"
+    className="h-12 text-base border-2 border-gray-300 input-hover bg-white placeholder:text-gray-500 text-black font-medium"
+  />
+</div>
+
               <div className="flex gap-4 pt-4">
                 <Button
                   type="submit"
@@ -494,7 +561,7 @@ const handleAddClient = async (e) => {
                     <TableCell className="py-6">
                       <div className="flex items-center gap-2">
                         <Badge variant={client.status === "Active" ? "default" : "secondary"} className="font-semibold px-3 py-1">
-                          {client.status}
+                          {client.status || "Active"}
                         </Badge>
                         <Button
                           variant="ghost"

@@ -15,6 +15,10 @@ const itemSchema = new mongoose.Schema({
   total: Number
 });
 
+const reqIfNotClient = function(){
+  return !this.billToDetail;
+}
+
 const invoiceSchema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
@@ -40,22 +44,45 @@ const invoiceSchema = new mongoose.Schema({
     ]
     },
     billTo: {
-        country: String, businessName: String, phone: String,
-        gstin: String, address: String, city: String, pincode: String,
-        state: String, email: String, pan: String,
-        customFields: [
-    {
-      label: String,
-      value: String
-    }
-   ]
+      country: { 
+        type: String, required: reqIfNotClient 
+      },
+      businessName: { 
+        type: String, required: reqIfNotClient 
+      },
+      phone: { 
+        type: String, required: reqIfNotClient 
+      },
+      gstin:{ 
+        type: String 
+      },           
+     address: { 
+      type: String, required: reqIfNotClient 
     },
-    /*
+    city:{
+       type: String, required: reqIfNotClient 
+    },
+    pincode:{ 
+      type: String, required: reqIfNotClient 
+    },
+    state:{ 
+      type: String, required: reqIfNotClient
+    },
+    email:{
+       type: String, required: reqIfNotClient 
+    },
+    pan:{ 
+      type: String 
+    },
+    customFields: [
+    { label: String, value: String }
+    ]
+    },
     billToDetail: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Client",
-      required: true
-    },*/
+      required: false
+    },
     shipping: {
         shippedFrom: {
             businessName: String, country: String, address: String,

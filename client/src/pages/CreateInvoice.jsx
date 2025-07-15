@@ -142,7 +142,15 @@ const CreateInvoice = () => {
           },
         });
         if (res.data?.billFrom) {
-          setBillFromData(res.data.billFrom);
+          setBillFromData(prev => ({
+            ...prev,
+            ...res.data.billFrom,
+            state: res.data.billFrom?.state ?? "",
+            email: res.data.billFrom?.email ?? "",
+            phone: res.data.billFrom?.phone ?? "",
+            gstin: res.data.billFrom?.gstin ?? "",
+            pan: res.data.billFrom?.pan ?? "",
+          }));
         }
       } catch (error) {
         console.error("Failed to fetch bill-from data:", error);
@@ -200,9 +208,13 @@ const CreateInvoice = () => {
   console.log("currentStep updated to:", currentStep);
 }, [currentStep]);
 
+const hasCompleteBillTo = (bill) => {
+  const required = ["businessName", "address", "city", "state", "pincode"];
+  return required.every((k) => bill[k]?.trim());
+};
+
 
   const handleSaveAndContinue = async () => {
-    console.log("Save and continue")
     try {
       const token = localStorage.getItem("token");
       const formData = new FormData();
@@ -216,7 +228,7 @@ const CreateInvoice = () => {
       invoiceData.attachments?.forEach((file) => formData.append("attachments", file));
       if (invoiceData?.signature) formData.append("signature", invoiceData.signature);
 
-      if (!selectedClientId?.trim() && !billToData.businessName?.trim()) {
+      if (!selectedClientId?.trim() && !hasCompleteBillTo(billToData)) {
   toast({
     title: "Missing Recipient Info",
     description: "Please select a client or manually fill in the Bill To section.",
@@ -229,7 +241,9 @@ console.log("Selected Client ID:", selectedClientId);
 
       formData.append("billFrom", JSON.stringify(billFromData));
       formData.append("billTo", JSON.stringify(billToData));
-      formData.append("billToDetail", selectedClientId);
+      if (selectedClientId?.trim()) {
+        formData.append("billToDetail", selectedClientId);
+      }
       formData.append("shipping", JSON.stringify(shippingDetails));
       formData.append("gstConfig", JSON.stringify(gstConfig));
       formData.append("items", JSON.stringify(invoiceData.items));
@@ -249,7 +263,8 @@ console.log("Selected Client ID:", selectedClientId);
       }));
       formData.append("currency", invoiceData.currency);
       formData.append("status", "draft");
-      formData.append("saveAsClient", invoiceData.saveAsClient);
+      const shouldSaveAsClient = invoiceData.saveAsClient === true;
+      formData.append("saveAsClient", shouldSaveAsClient ? "true" : "false");
 
       // Save bill-from data
       await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
@@ -344,8 +359,22 @@ console.log("Selected Client ID:", selectedClientId);
           <BillToSection
             billToData={billToData}
             setBillToData={setBillToData}
+            selectedClientId={selectedClientId}
+            setSelectedClientId={setSelectedClientId}
           />
         </div>
+        <label className="flex items-center gap-2 text-sm mt-2">
+        <input
+          type="checkbox"
+          checked={invoiceData.saveAsClient}
+          onChange={(e) =>
+            setInvoiceData((prev) => ({ ...prev, saveAsClient: e.target.checked }))
+          }
+          className="rounded border-gray-300"
+        />
+         Save as client for future use
+        </label>
+
 
         {/* Action Buttons Row */}
         

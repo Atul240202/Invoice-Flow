@@ -216,8 +216,13 @@ useEffect(() => {
           Authorization: `Bearer ${token}`, 
         },
       });
-      const data = await res.json();
-      setMonthlyTrend(data);
+      if (!res.ok) throw new Error("Network response was not OK");
+
+      const raw = await res.json();
+      const trendArray = Array.isArray(raw) ? raw : raw?.monthlyTrend || [];
+
+      setMonthlyTrend(trendArray);
+      
     } catch (err) {
       console.error("Trend fetch failed:", err);
     }
