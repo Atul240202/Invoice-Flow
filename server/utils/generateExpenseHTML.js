@@ -14,15 +14,15 @@ function generateExpenseReportHTML({ expenses = [] }) {
   const rows = expenses
     .map(
       (e) => `
-    <tr>
-      <td>${e.date || "-"}</td>
-      <td>${e.vendor || "-"}</td>
-      <td>${e.category || "-"}${e.subCategory ? " → " + e.subCategory : ""}</td>
-      <td>${e.description || ""}</td>
-      <td style="text-align:right;">₹${parseFloat(e.amount).toFixed(2)}</td>
-      <td style="text-align:right;">${e.gstPercent || 0}%</td>
-      <td style="text-align:center;">${e.itcEligible ? "✅" : "❌"}</td>
-    </tr>`
+      <tr>
+        <td>${new Date(e.date).toLocaleDateString()}</td>
+        <td>${e.vendor || "-"}</td>
+        <td>${e.category || "-"}${e.subCategory ? " → " + e.subCategory : ""}</td>
+        <td>${e.description || "-"}</td>
+        <td style="text-align:right;">₹${parseFloat(e.amount).toFixed(2)}</td>
+        <td style="text-align:right;">${e.gstPercent || 0}%</td>
+        <td style="text-align:center;">${e.itcEligible ? "✅" : "❌"}</td>
+      </tr>`
     )
     .join("");
 
@@ -33,55 +33,64 @@ function generateExpenseReportHTML({ expenses = [] }) {
         body {
           font-family: 'Segoe UI', sans-serif;
           padding: 40px;
+          background: #f8fafc;
           color: #1e293b;
         }
         h1 {
           text-align: center;
-          font-size: 28px;
-          color: #0f172a;
-          margin-bottom: 10px;
+          font-size: 32px;
+          color: #0369a1;
+          margin-bottom: 5px;
         }
         .subheading {
           text-align: center;
-          font-size: 16px;
-          color: #475569;
+          font-size: 15px;
+          color: #64748b;
           margin-bottom: 30px;
         }
         table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 10px;
+          background: white;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+          border-radius: 8px;
+          overflow: hidden;
         }
         th, td {
-          padding: 10px;
-          border: 1px solid #e5e7eb;
+          padding: 12px 14px;
+          border-bottom: 1px solid #e2e8f0;
           font-size: 13px;
         }
         th {
-          background: #f1f5f9;
+          background: #e0f2fe;
           color: #0f172a;
           text-align: left;
         }
         tbody tr:nth-child(even) {
-          background-color: #f8fafc;
+          background-color: #f1f5f9;
         }
         .summary {
-          margin-top: 30px;
-          padding: 20px;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          border-radius: 8px;
-          width: 100%;
+          margin-top: 40px;
+          margin-right:40px;
+          padding: 24px;
+          background: #e0f2fe;
+          border: 1px solid #bae6fd;
+          border-radius: 10px;
+          width: 93%;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         }
         .summary h3 {
-          font-size: 16px;
-          margin-bottom: 10px;
-          color: #1e293b;
+          font-size: 18px;
+          margin-bottom: 12px;
+          color: #0369a1;
         }
         .summary p {
           margin: 6px 0;
-          font-size: 14px;
+          font-size: 15px;
           color: #334155;
+        }
+        .summary p strong {
+          color: #0f172a;
         }
       </style>
     </head>

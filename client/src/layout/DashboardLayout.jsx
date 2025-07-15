@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import { SidebarTrigger } from "../components/sidebar/SidebarTrigger";
 import { AppSidebar } from "./AppSideBar";
 import { useSidebar } from "../components/sidebar/SidebarContext";
-import { NavLink } from "react-router-dom";
+
 
 export default function DashboardLayout() {
   const { isOpen } = useSidebar();

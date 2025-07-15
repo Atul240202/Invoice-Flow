@@ -197,3 +197,20 @@ exports.getMonthlyTrend = async (req, res) => {
     res.status(500).json({ message: "Error generating trendline", error });
   }
 };
+
+exports.getExpensesFiltered = async (from, to, type, userId) => {
+  const query = {
+    date: {
+      $gte: new Date(from),
+      $lte: new Date(to),
+    },
+    user: userId,
+  };
+
+  if (type && type !== "all") {
+    query.type = type;
+  }
+
+  const expenses = await Expense.find(query).sort({ date: -1 });
+  return expenses;
+};
