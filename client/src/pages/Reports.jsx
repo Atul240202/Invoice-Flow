@@ -39,8 +39,8 @@ const Reports = () => {
 
       setFullMonthlyData(chartFormatted);
 
-      const totalRevenue = trend.reduce((sum, m) => sum + m.income, 0);
-      setTotalRevenue(totalRevenue);
+      const totalRevenue = trend.reduce((sum, m) => sum + (m.income || 0), 0);
+      setTotalRevenue(Number(totalRevenue.toFixed(2)));
 
       const invoiceRes = await axios.get("http://localhost:5000/api/invoices/summary", { headers });
       setTotalInvoices(invoiceRes.data.totalInvoices);
@@ -316,6 +316,8 @@ const Reports = () => {
               />
               <Legend wrapperStyle={{ color: '#000', fontWeight: 'bold' }} />
               <Bar dataKey="revenue" fill="#3B82F6" radius={[4, 4, 0, 0]} name="Revenue (₹)" />
+              <Bar dataKey="expenses" fill="#EF4444" radius={[4, 4, 0, 0]} name="Expenses (₹)" />
+              <Bar dataKey="itc" fill="#8B5CF6" radius={[4, 4, 0, 0]} name="ITC Claimed (₹)" />
               <Bar dataKey="invoices" fill="#22C55E" radius={[4, 4, 0, 0]} name="Invoices" />
               <Bar dataKey="clients" fill="#F97316" radius={[4, 4, 0, 0]} name="New Clients" />
             </BarChart>
