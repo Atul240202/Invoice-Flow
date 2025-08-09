@@ -3,6 +3,7 @@ const router = express.Router();
 const authMiddleware = require("../middlewares/authMiddleware");
 const multer = require("multer");
 const Invoice = require("../models/Invoice");
+const generateInvoiceNumber = require("./generateInvoiceNumber");
 
 const {
     createInvoice,
@@ -200,6 +201,18 @@ router.get('/recent', authMiddleware, async (req, res) => {
   }
 });
 */
+
+router.get("/generate-invoice/:prefix", async (req, res) => {
+  try {
+    const { prefix } = req.params;
+    const invoiceNumber = await generateInvoiceNumber(prefix);
+    res.status(200).json({ invoiceNumber });
+  } catch (error) {
+    console.error("Invoice generation error:", error);
+    res.status(500).json({ error: "Failed to generate invoice number" });
+  }
+});
+
 
 
 module.exports = router;
