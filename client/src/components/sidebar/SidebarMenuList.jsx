@@ -7,35 +7,34 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from ".";
+import { NavLink } from "react-router-dom";
 
 export function SidebarMenuList({ title, items }) {
   const location = useLocation();
 
   return (
     <SidebarGroup className="mt-8 first:mt-0">
-      <SidebarGroupLabel className="text-purple-700 font-semibold mb-3 text-sm uppercase tracking-wide">
+      <SidebarGroupLabel className="text-cyan-600 font-semibold mb-3 text-sm uppercase tracking-wide">
         {title}
       </SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu className="space-y-2">
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton
-                asChild
-                isActive={location.pathname === item.url}
-                className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  location.pathname === item.url
-                    ? "bg-gradient-to-r from-purple-600 to-blue-500 text-white shadow-lg transform scale-105"
-                    : "text-slate-700 hover:bg-purple-50 hover:text-purple-700"
-                }`}
-              >
-                <Link to={item.url} className="flex items-center gap-4 w-full">
-                  <item.icon className="h-5 w-5" />
-                  <span className="font-medium">{item.title}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
+             {items.map((item) => (
+          <NavLink
+            key={item.url}
+            to={item.url}
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? "text-white bg-gradient-to-br from-blue-500 to-cyan-600 shadow"
+                  : "text-gray-700 hover:bg-gray-100"
+              }`
+            }
+          >
+            <item.icon className="w-5 h-5" />
+            {item.title}
+          </NavLink>
+        ))}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>

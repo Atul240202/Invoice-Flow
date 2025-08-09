@@ -15,7 +15,8 @@ import { Checkbox } from "../components/checkbox";
 import { Switch } from "../components/Switch";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
 import api from "../utils/api";
-import axios from 'axios';
+  import axios from "axios";
+
 
 const ExpenseTracker = () => {
   const { toast } = useToast();
@@ -251,12 +252,7 @@ useEffect(() => {
     });
   };
 
-  const exportToPDF = () => {
-    toast({
-      title: "Export Started", 
-      description: "Your PDF report is being generated...",
-    });
-  };
+  
 
   const exportToJSON = () => {
     const dataStr = JSON.stringify(filteredExpenses, null, 2);
@@ -268,13 +264,43 @@ useEffect(() => {
     linkElement.click();
   };
 
+
+const handleExportReport = async () => {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await fetch("http://localhost:5000/api/reports/export-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        from: "2025-07-01",
+        to: "2025-07-31",
+        type: "all", // optional
+      }),
+    });
+
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "Expense_Report.pdf";
+    link.click();
+    link.remove();
+  } catch (err) {
+    console.error("Export failed", err);
+  }
+};
+
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 shadow-lg">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-blue-500 to-cyan-400 shadow-lg">
               <TrendingDown className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -291,7 +317,7 @@ useEffect(() => {
            
             Import Bank Statement
           </Button>
-          <Button onClick={exportToPDF} className="h-18 px-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg">
+          <Button onClick={handleExportReport} className="h-18 px-6 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-green-700 hover:to-green-800 text-white font-semibold shadow-lg">
             
             Export Report
           </Button>
@@ -848,8 +874,8 @@ useEffect(() => {
                   </div>
 
                   <div className="pt-4 border-t border-gray-200">
-                    <Button className="w-full h-12 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold">
-                      <Download className="mr-2 h-4 w-4" />
+                    <Button className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-green-700 hover:to-green-800 text-white font-semibold">
+                     
                       Export GSTR-3B Format
                     </Button>
                   </div>
@@ -909,7 +935,7 @@ useEffect(() => {
                   <Download className="mr-2 h-4 w-4" />
                   Export Excel
                 </Button>
-                <Button onClick={exportToPDF} className="h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold">
+                <Button onClick={handleExportReport} className="h-12 px-6 bg-red-600 hover:bg-red-700 text-white font-semibold">
                   <Download className="mr-2 h-4 w-4" />
                   Export PDF
                 </Button>

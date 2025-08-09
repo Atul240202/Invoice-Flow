@@ -49,14 +49,14 @@ export default function LoginForm() {
         required
       />
       <p className="text-right text-sm">
-        <a href="/forgot-password" className="text-purple-600 hover:underline">
+        <a href="/forgot-password" className="text-blue-500 hover:underline">
           Forgot Password?
         </a>
       </p>
       {error && <p className="text-red-600 text-sm">{error}</p>}
       <button
         type="submit"
-        className="bg-purple-400 hover:bg-purple-700 text-white py-2 rounded-xl font-medium"
+        className=" bg-gradient-to-r from-blue-500 to-cyan-400 hover:bg-purple-700 text-white py-2 rounded-xl font-medium"
       >
         Login
       </button>

@@ -128,7 +128,7 @@ if (stats) {
       {/* Quick Actions */}
       <div className="grid gap-6 md:grid-cols-3 mb-6">
         {/* Send to CA */}
-        <Card className="bg-gradient-to-br from-indigo-50 to-purple-100 border border-indigo-200">
+        <Card className="bg-gradient-to-r from-brightBlue to-brightCyan border border-indigo-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 rounded-xl bg-indigo-600 shadow-lg">
@@ -153,7 +153,7 @@ if (stats) {
         </Card>
 
         {/* GST Reports */}
-        <Card className="bg-gradient-to-br from-purple-50 to-indigo-100 border border-purple-200">
+        <Card className="bg-gradient-to-r from-brightBlue to-brightCyan border border-purple-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="p-3 rounded-xl bg-purple-600 shadow-lg">

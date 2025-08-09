@@ -18,8 +18,7 @@ const tabs = [
   { key: "business", label: "Business", icon: <Building2 className="h-4 w-4" />, component: BusinessSettings },
   { key: "notifications", label: "Notifications", icon: <Bell className="h-4 w-4" />, component: NotificationSettings },
   { key: "security", label: "Security", icon: <Shield className="h-4 w-4" />, component: SecuritySettings },
-  { key: "appearance", label: "Appearance", icon: <Palette className="h-4 w-4" />, component: () => <div>Appearance Settings</div> },
-  { key: "data", label: "Data", icon: <Database className="h-4 w-4" />, component: () => <div>Data Settings</div> },
+ 
 ];
 
 export default function SettingsPage() {
@@ -33,7 +32,7 @@ export default function SettingsPage() {
       <div className="flex justify-between items-start">
         <div className="space-y-3">
           <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-gradient-to-r from-purple-600 to-purple-700 shadow-lg">
+            <div className="p-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 shadow-lg">
               <Shield className="h-8 w-8 text-white" />
             </div>
             <div>

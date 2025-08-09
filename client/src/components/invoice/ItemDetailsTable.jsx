@@ -109,8 +109,10 @@ export const ItemDetailsTable = ({
 
   return (
     <Card className="bg-white border border-gray-200 rounded-lg shadow-sm">
-      <CardContent className="p-0 overflow-x-auto">
-        <div className="min-w-[1000px]">
+
+      <CardContent className="p-0">
+  <div className="w-full overflow-x-auto">
+    <div className="min-w-full">
           {/* Table Header */}
           <div className="flex w-full bg-gray-100 border-b font-medium">
             <div className="flex-1 px-4 py-2 border-r">Item</div>
@@ -208,6 +210,8 @@ export const ItemDetailsTable = ({
               📊 Summarize Total Quantity
             </span>
           </div>
+
+        </div>
         </div>
       </CardContent>
     </Card>

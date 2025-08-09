@@ -63,6 +63,8 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig, conversi
 
   const grandTotal = taxableAmount + gstAmount;
 
+  
+
   const handleQRUpload = (e) => {
     const file = e.target.files[0];
     if (file && file.type.startsWith("image/")) {
@@ -77,6 +79,7 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig, conversi
       alert("Please upload a valid image file.");
     }
   };
+  
 
   const handleUploadClick = () => {
     if (fileInputRef.current) fileInputRef.current.click();

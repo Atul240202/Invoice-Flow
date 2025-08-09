@@ -4,15 +4,37 @@ import { Separator } from "../separator";
 import { useFormContext } from "react-hook-form";
 import { format } from "date-fns";
 import { Switch } from "../Switch";
-import { ChevronUp,ChevronDown,Printer,Download,Mail } from "lucide-react";
+import { ChevronUp,ChevronDown,Printer,Download,Mail,Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "../button";
 import axios from 'axios';
+import { useToast } from "../../hooks/toast";
+import { Label } from "../Label";
+import { Input } from "../Input";
 
+const BankingPreviewStep = ({ invoiceData = {}, billFromData = {}, billToData = {}, goToStep }) => {
+const { toast } = useToast();
+const [loading, setLoading] = useState(false);
+  const [showBankForm, setShowBankForm] = useState(false);
+  const [showBankDetails, setShowBankDetails] = useState(true);
+  const [bankingDetails, setBankingDetails] = useState({
+    accountHolderName: "Animesh Pravinchandra Kudake",
+    accountNumber: "68025555438",
+    ifsc: "MAHB0000009",
+    bankName: "Bank Of Maharashtra",
+    accountType: "Savings",
+    upiIds: [""],
+  });
 
+   const handleClick = () => {
+    goToStep(2); // or whatever step number you want
+  };
 
+  const handleSaveBankDetails = (data) => {
+    setBankingDetails(data);
+    setShowBankForm(false);
+  };
 
-const BankingPreviewStep = ({ invoiceData = {}, billFromData = {}, billToData = {} }) => {
 if (!invoiceData) {
   console.warn("invoiceData is missing.");
   return <div className="text-center py-8 text-gray-600">Loading invoice preview...</div>;
@@ -26,14 +48,9 @@ if (!Array.isArray(items)) {
 }
 
 
-  const [showBankDetails, setShowBankDetails] = useState(true);
 
-  const [bankingDetails] = useState({
-    bankName: "HDFC Bank",
-    accountHolderName: "John Doe",
-    accountNumber: "1234567890",
-    ifsc: "HDFC0001234",
-  });
+
+ 
 
   /*
   if (!form) {
@@ -101,33 +118,50 @@ if (!Array.isArray(items)) {
 };
 
   
-  
-const downloadPDF = async () => {
-  try {
-      
-    
-    
-     const payload = {
-      ...invoiceData,
-      billFromData,
-      billToData,
-    };
-
-    
-
-    const response = await axios.post('http://localhost:5000/generate-pdf', payload, {
-      responseType: 'blob', 
+ const downloadPDF = async (invoice, setLoading, toast) => {
+  if (!invoice || !invoice._id) {
+    toast?.({
+      title: "Download Failed",
+      description: "Invoice ID is missing.",
+      variant: "destructive",
     });
+    return;
+  }
 
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.download = `invoice-${invoiceData.invoiceNumber || 'download'}.pdf`;
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("token");
+
+    const res = await axios.post(
+      `http://localhost:5000/api/invoices/${invoice._id}/download-pdf`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: "application/pdf" })
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `invoice-${invoice._id}.pdf`);
+    document.body.appendChild(link);
     link.click();
-  } catch (error) {
-    console.error('Error downloading PDF:', error);
+    link.remove();
+  } catch (err) {
+    console.error("PDF Download Error:", err);
+    toast?.({
+      title: "Download Failed",
+      description: "Unable to generate PDF",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
   }
 };
+
 
   const handleSendEmail = () => {
     // Add email sending logic
@@ -140,6 +174,15 @@ const downloadPDF = async () => {
         <CardHeader className="pb-2 border-b">
           <CardTitle className="text-3xl font-bold text-slate-900">Invoice Preview</CardTitle>
         </CardHeader>
+
+        <Button
+  variant="outline"
+  onClick={() => goToStep(1)}
+  className="mb-4"
+>
+  ← Back to Form
+</Button>
+
 
       <CardContent className="space-y-10 pt-8 text-slate-800 font-sans">
  {/* === Header: Invoice Title + Info === */}
@@ -173,7 +216,7 @@ const downloadPDF = async () => {
     <img
       src={invoiceData.businessLogo}
       alt="Business Logo"
-      className="mt-3 h-16 w-auto mx-auto rounded shadow-sm border"
+      className="mt-3 h-25 w-32 mx-auto rounded shadow-sm border"
     />
   </>
 )}
@@ -306,42 +349,79 @@ const downloadPDF = async () => {
   {/* === Totals + Bank + Signature === */}
 <div className="grid md:grid-cols-2 gap-4 border-t pt-6 text-sm">
   {/* === Bank Details on LHS === */}
-  <div>
-    <h3 className="uppercase font-semibold text-slate-800 mb-2">Bank Details</h3>
-    <div className="grid sm:grid-cols-2 gap-y-1 text-gray-700">
-      <p><strong>Account Name:</strong> Animesh Pravinchandra Kudake</p>
-      <p><strong>Account Number:</strong> 68025555438</p>
-      <p><strong>IFSC:</strong> MAHB0000009</p>
-      <p><strong>Bank:</strong> Bank Of Maharashtra</p>
-      <p><strong>Account Type:</strong> Savings</p>
+  <div className="bg-purple-50 border border-purple-200 rounded-xl p-5 shadow-sm">
+    <h3 className="uppercase font-semibold text-purple-700 mb-3">Bank Details</h3>
+    <div className="grid sm:grid-cols-2 gap-y-1 text-gray-800">
+      {bankingDetails && (
+  <>
+    {bankingDetails.accountHolderName && (
+      <p><strong>Account Name:</strong> {bankingDetails.accountHolderName}</p>
+    )}
+    {bankingDetails.accountNumber && (
+      <p><strong>Account Number:</strong> {bankingDetails.accountNumber}</p>
+    )}
+    {bankingDetails.ifsc && (
+      <p><strong>IFSC:</strong> {bankingDetails.ifsc}</p>
+    )}
+    {bankingDetails.bankName && (
+      <p><strong>Bank:</strong> {bankingDetails.bankName}</p>
+    )}
+    {bankingDetails.accountType && (
+      <p><strong>Account Type:</strong> {bankingDetails.accountType}</p>
+    )}
+  </>
+)}
+
     </div>
   </div>
 
+
   {/* === Signature on RHS === */}
-  {invoiceData.signature && (
-    <div className="text-right flex flex-col justify-end items-end">
-      <p className="text-sm text-gray-600">Authorized Signatory</p>
-      <img
-        src={URL.createObjectURL(invoiceData.signature)}
-        alt="Signature"
-        className="h-16 mt-2 inline-block"
-      />
-    </div>
-  )}
+{invoiceData.signature && (
+  <div className="text-right flex flex-col justify-end items-end mt-2">
+    <p className="text-sm text-gray-600 mb-1">Authorized Signatory</p>
+    <img
+      src={URL.createObjectURL(invoiceData.signature)}
+      alt="Signature"
+      className="h-24 w-48  inline-block border border-gray-300 rounded shadow-sm"
+    />
+  </div>
+)}
 </div>
+
+
+
 
 {/* === Terms and Conditions Full Width === */}
 {invoiceData.terms && (
-  <div className="pt-6 text-sm space-y-2 border-t mt-6">
-    <h3 className="font-semibold text-slate-800">Terms and Conditions</h3>
-    <p className="text-gray-700 whitespace-pre-wrap">{invoiceData.terms}</p>
+  <div className="w-full border-t mt-6 pt-6 px-4 sm:px-6 md:px-8 lg:px-10">
+    <div className="max-w-4xl mx-auto space-y-3 text-sm">
+      <h3 className="font-semibold text-slate-800 text-base sm:text-lg">Terms and Conditions</h3>
+      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+        {invoiceData.terms}
+      </p>
+    </div>
   </div>
 )}
+
+{/* === notes === */}
+{invoiceData.terms && (
+  <div className="w-full border-t mt-6 pt-6 px-4 sm:px-6 md:px-8 lg:px-10">
+    <div className="max-w-4xl mx-auto space-y-3 text-sm">
+      <h3 className="font-semibold text-slate-800 text-base sm:text-lg">Notes</h3>
+      <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
+        {invoiceData.Notes}
+      </p>
+    </div>
+  </div>
+)}
+
+
 </CardContent>
 
 
       </Card>
-        <Card className="bg-white border border-gray-200 rounded-lg shadow-sm">
+         <Card className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -367,56 +447,86 @@ const downloadPDF = async () => {
 
         {showBankDetails && (
           <CardContent className="space-y-6">
-            {/* Bank Account Toggle */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded">
-                  <span className="text-xl">🏛️</span>
+            {showBankForm ? (
+              <BankingDetailsForm
+                initialData={bankingDetails}
+                onSave={handleSaveBankDetails}
+                onCancel={() => setShowBankForm(false)}
+              />
+            ) : (
+              <>
+                {/* Bank Account Toggle */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded">
+                      <span className="text-xl">🏛️</span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">Show Bank Account Details</h3>
+                      <p className="text-sm text-gray-600">NEFT, IMPS, CASH</p>
+                    </div>
+                  </div>
+                  <Switch checked={showBankDetails} onCheckedChange={setShowBankDetails} />
                 </div>
-                <div>
-                  <h3 className="font-medium">Show Bank Account Details</h3>
-                  <p className="text-sm text-gray-600">NEFT, IMPS, CASH</p>
-                </div>
-              </div>
-              <Switch checked={showBankDetails} onCheckedChange={setShowBankDetails} />
-            </div>
 
-            {/* Bank Account Info */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-medium">Bank Account</h3>
-                <Button variant="ghost" size="sm" className="text-blue-600">✏️ Edit</Button>
-              </div>
-              <div className="bg-gray-50 p-6 rounded-lg space-y-3">
-                <h4 className="font-semibold text-lg">{bankingDetails.bankName}</h4>
-                <p className="text-gray-700 font-medium">{bankingDetails.accountHolderName}</p>
-                <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                  <div><span className="font-medium">Account No:</span> {bankingDetails.accountNumber}</div>
-                  <div><span className="font-medium">IFSC:</span> {bankingDetails.ifsc}</div>
+                {/* Bank Account Info */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">Bank Account</h3>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-blue-600"
+                      onClick={() => setShowBankForm(true)}
+                    >
+                      ✏️ Edit
+                    </Button>
+                  </div>
+                  <div className="bg-gray-50 p-6 rounded-lg space-y-3">
+                    <h4 className="font-semibold text-lg">{bankingDetails.bankName}</h4>
+                    <p className="text-gray-700 font-medium">{bankingDetails.accountHolderName}</p>
+                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
+                      <div><span className="font-medium">Account No:</span> {bankingDetails.accountNumber}</div>
+                      <div><span className="font-medium">IFSC:</span> {bankingDetails.ifsc}</div>
+                    </div>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    className="w-full border-gray-300 h-12"
+                    onClick={() => setShowBankForm(true)}
+                  >
+                    Select Another Bank Account
+                  </Button>
                 </div>
-              </div>
-              <Button variant="outline" className="w-full border-gray-300 h-12">
-                Select Another Bank Account
-              </Button>
-            </div>
 
-            {/* UPI Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 p-2 rounded">
-                  <span className="text-xl">📱</span>
+                {/* UPI Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded">
+                      <span className="text-xl">📱</span>
+                    </div>
+                    <div>
+                      <h3 className="font-medium">UPI Details</h3>
+                      <p className="text-sm text-gray-600">
+                        Collect payments via UPI apps like Google Pay, PhonePe, PayTM.
+                      </p>
+                    </div>
+                  </div>
+                  {bankingDetails.upiIds[0] ? (
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <p className="font-medium">{bankingDetails.upiIds[0]}</p>
+                    </div>
+                  ) : (
+                    <Button 
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-12"
+                      onClick={() => setShowBankForm(true)}
+                    >
+                      ➕ Add UPI ID
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-medium">Add UPI Details</h3>
-                  <p className="text-sm text-gray-600">
-                    Collect payments via UPI apps like Google Pay, PhonePe, PayTM.
-                  </p>
-                </div>
-              </div>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white h-12">
-                ➕ Add UPI ID
-              </Button>
-            </div>
+              </>
+            )}
           </CardContent>
         )}
       </Card>
@@ -431,17 +541,160 @@ const downloadPDF = async () => {
             <Button onClick={handlePrint} className="h-14 bg-gray-600 hover:bg-gray-700 text-white font-medium">
               <Printer className="mr-2 h-5 w-5" /> Print Invoice
             </Button>
-            <Button onClick={downloadPDF} className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium">
-              <Download className="mr-2 h-5 w-5" /> Download as PDF
-            </Button>
+           <Button
+  onClick={() => downloadPDF(invoiceData, setLoading, toast)}
+  className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium"
+>
+  <Download className="mr-2 h-5 w-5" /> Download as PDF
+</Button>
+
             <Button onClick={handleSendEmail} className="h-14 bg-green-600 hover:bg-green-700 text-white font-medium">
               <Mail className="mr-2 h-5 w-5" /> Send via Email
             </Button>
           </div>
         </CardContent>
       </Card>
-
     </div>
+  );
+};
+
+const BankingDetailsForm = ({ initialData = {}, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+    accountHolderName: "",
+    accountNumber: "",
+    ifsc: "",
+    bankName: "",
+    accountType: "",
+    upiIds: [""],
+    ...initialData,
+  });
+
+  // Handle regular input fields
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Handle UPI field changes
+  const handleUpiChange = (index, value) => {
+    const newUpiIds = [...formData.upiIds];
+    newUpiIds[index] = value;
+    setFormData((prev) => ({ ...prev, upiIds: newUpiIds }));
+  };
+
+  const addUpiField = () => {
+    setFormData((prev) => ({ ...prev, upiIds: [...prev.upiIds, ""] }));
+  };
+
+  const removeUpiField = (index) => {
+    const updated = [...formData.upiIds];
+    updated.splice(index, 1);
+    setFormData((prev) => ({ ...prev, upiIds: updated }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* === Bank Fields === */}
+      <div>
+        <Label htmlFor="accountHolderName">Account Holder Name</Label>
+        <Input
+          name="accountHolderName"
+          value={formData.accountHolderName}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="accountNumber">Account Number</Label>
+        <Input
+          name="accountNumber"
+          value={formData.accountNumber}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="ifsc">IFSC Code</Label>
+        <Input
+          name="ifsc"
+          value={formData.ifsc}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="bankName">Bank Name</Label>
+        <Input
+          name="bankName"
+          value={formData.bankName}
+          onChange={handleChange}
+          required
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="accountType">Account Type</Label>
+        <Input
+          name="accountType"
+          value={formData.accountType}
+          onChange={handleChange}
+          placeholder="e.g., Savings, Current"
+          required
+        />
+      </div>
+
+      {/* === UPI IDs Section === */}
+      <div className="space-y-3">
+        <Label>UPI ID(s)</Label>
+        {formData.upiIds.map((upi, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <Input
+              type="text"
+              value={upi}
+              placeholder="example@upi"
+              onChange={(e) => handleUpiChange(index, e.target.value)}
+              className="flex-grow"
+            />
+            {formData.upiIds.length > 1 && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => removeUpiField(index)}
+                className="text-red-500"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addUpiField}
+          className="text-sm"
+        >
+          ➕ Add UPI ID
+        </Button>
+      </div>
+
+      {/* === Actions === */}
+      <div className="flex justify-end gap-3 pt-4">
+        <Button type="button" variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button type="submit" className="bg-blue-600 text-white">
+          Save
+        </Button>
+      </div>
+    </form>
   );
 };
 
