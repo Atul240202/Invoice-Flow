@@ -5,6 +5,15 @@ const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
 
+const safeParse = (json) => {
+  if (!json) return {};
+  if (typeof json === "object") return json; // already parsed
+  try {
+    return JSON.parse(json);
+  } catch {
+    return {};
+  }
+};
 
 //create invoice
 exports.createInvoice = async (req, res) => {
@@ -24,18 +33,18 @@ exports.createInvoice = async (req, res) => {
       status,
       billToDetail,
       saveAsClient,
+      bankDetails,
+      upiDetails
     } = req.body;
 
-    const safeParse = (json) => {
-      try {
-        return JSON.parse(json);
-      } catch {
-        return {}; 
-      }
-    };
-
 const parsedBillTo = safeParse(billTo);
-const parsedSummary = safeParse(summary);
+    const parsedShipping = safeParse(shipping);
+    const parsedGstConfig = safeParse(gstConfig);
+    const parsedItems = safeParse(items);
+    const parsedSummary = safeParse(summary);
+    const parsedAdditionalOptions = safeParse(additionalOptions);
+const parsedBankDetails = safeParse(bankDetails);
+ const parsedUpiDetails = safeParse(upiDetails);
 
 let clientId = null;
 
@@ -71,6 +80,8 @@ let clientId = null;
         qrImage: req.files['qrImage']?.[0]?.path || '',
         signature: req.files['signature']?.[0]?.path || '',
       },
+      bankDetails: parsedBankDetails,
+      upiDetails: parsedUpiDetails,
       status: status || "Draft",
     });
 
@@ -188,7 +199,9 @@ exports.updateInvoice = async (req, res) => {
       items,
       summary,
       additionalOptions,
-      status
+      status,
+      bankDetails,
+      upiDetails
     } = req.body;
 
     const updatedFields = {};
@@ -210,8 +223,12 @@ exports.updateInvoice = async (req, res) => {
         ...JSON.parse(additionalOptions),
         attachments: req.files?.attachments?.map(file => file.path) || [],
         qrImage: req.files?.qrImage?.[0]?.path || '',
+        signature: req.files?.signature?.[0]?.path || '',
       };
     }
+    if (bankDetails) updatedFields.bankDetails = JSON.parse(bankDetails);
+if (upiDetails) updatedFields.upiDetails = JSON.parse(upiDetails);
+
 
     if (req.files?.businessLogo) {
       updatedFields.businessLogo = req.files.businessLogo[0].path;

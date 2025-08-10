@@ -13,6 +13,8 @@ const {
   saveShippedFrom,
   getGstConfig,
   saveGstConfig,
+  getBankDetails,
+  saveBankDetails,
 } = require('../controllers/settingsController');
 
 
@@ -34,5 +36,8 @@ router.post('/shipped-from', authMiddleware, saveShippedFrom);
 
 router.get('/gst-config', authMiddleware, getGstConfig);
 router.post('/gst-config', authMiddleware, saveGstConfig);
+
+router.get('/bank-details', authMiddleware, getBankDetails);
+router.post('/bank-details', authMiddleware, saveBankDetails);
 
 module.exports = router;

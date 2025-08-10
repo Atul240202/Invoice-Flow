@@ -65,20 +65,34 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig, conversi
 
   
 
-  const handleQRUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => setQrImage(reader.result);
-      setInvoiceData(prev => ({
-        ...prev,
-        qrImage: file 
-      }));
-      reader.readAsDataURL(file);
-    } else {
-      alert("Please upload a valid image file.");
-    }
+  // inside TotalsSection component
+const MAX_QR_SIZE = 5 * 1024 * 1024; // 5MB
+
+const handleQRUpload = (e) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    alert("Please upload an image (png/jpg).");
+    return;
+  }
+  if (file.size > MAX_QR_SIZE) {
+    alert("Max file size 5 MB.");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onloadend = () => {
+    const base64 = reader.result; 
+    setQrImage(base64); 
+    setInvoiceData(prev => ({
+      ...prev,
+      qrFile: file,         
+      qrPreviewUrl: base64   
+    }));
   };
+  reader.readAsDataURL(file);
+};
+
   
 
   const handleUploadClick = () => {

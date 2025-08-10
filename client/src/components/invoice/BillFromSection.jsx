@@ -6,29 +6,69 @@ import { Button } from "../button";
 import { X } from "lucide-react";
 import axios from "axios";
 
-export const BillFromSection = ({ billFromData, setBillFromData }) => {
-    const indianStates = [
+// --- Add state-pincode mapping ---
+const STATE_PINCODE_RANGES = {
+  "Andhra Pradesh": [[500000, 534999]],
+  "Arunachal Pradesh": [[790000, 792999]],
+  "Assam": [[780000, 788999]],
+  "Bihar": [[800000, 854999]],
+  "Chhattisgarh": [[490000, 497999]],
+  "Goa": [[403000, 403999]],
+  "Gujarat": [[360000, 396999]],
+  "Haryana": [[121000, 136999]],
+  "Himachal Pradesh": [[171000, 177999]],
+  "Jharkhand": [[815000, 834999]],
+  "Karnataka": [[560000, 591999]],
+  "Kerala": [[670000, 695999]],
+  "Madhya Pradesh": [[450000, 488999]],
+  "Maharashtra": [[400000, 444999]],
+  "Manipur": [[795000, 795999]],
+  "Meghalaya": [[793000, 794999]],
+  "Mizoram": [[796000, 796999]],
+  "Nagaland": [[797000, 798999]],
+  "Odisha": [[751000, 769999]],
+  "Punjab": [[140000, 160999]],
+  "Rajasthan": [[301000, 345999]],
+  "Sikkim": [[737000, 737999]],
+  "Tamil Nadu": [[600000, 643999]],
+  "Telangana": [[500000, 509999]],
+  "Tripura": [[799000, 799999]],
+  "Uttar Pradesh": [[201000, 285999]],
+  "Uttarakhand": [[244000, 263999]],
+  "West Bengal": [[700000, 743999]],
+  // Add more if needed
+};
+
+function isPincodeValidForState(state, pincode) {
+  if (!state || !pincode) return true; // Don't show error if not filled
+  const ranges = STATE_PINCODE_RANGES[state];
+  if (!ranges) return true; // If state not mapped, skip validation
+  const pin = parseInt(pincode, 10);
+  return ranges.some(([start, end]) => pin >= start && pin <= end);
+}
+
+export const BillFromSection = ({ billFromData, setBillFromData, pincodeError }) => {
+  const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
     "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
     "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
     "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
   ];
 
-const [showEmail, setShowEmail] = useState(false);
-const [showPhone, setShowPhone] = useState(false);
-const [showGST,  setShowGST]  = useState(false);
-const [showPAN,  setShowPAN]  = useState(false);
-const [customFields, setCustomFields] = useState([]);
+  const [showEmail, setShowEmail] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
+  const [showGST,  setShowGST]  = useState(false);
+  const [showPAN,  setShowPAN]  = useState(false);
+  const [customFields, setCustomFields] = useState([]);
+  const [localPincodeError, setLocalPincodeError] = useState("");
 
-useEffect(() => {
-  setShowEmail(!!billFromData.email);
-  setShowPhone(!!billFromData.phone);
-  setShowGST  (!!billFromData.gstin);
-  setShowPAN  (!!billFromData.pan);
-  setCustomFields(billFromData.customFields || []);
-}, [billFromData]);
-
-
+  useEffect(() => {
+    setShowEmail(!!billFromData.email);
+    setShowPhone(!!billFromData.phone);
+    setShowGST  (!!billFromData.gstin);
+    setShowPAN  (!!billFromData.pan);
+    setCustomFields(billFromData.customFields || []);
+  }, [billFromData]);
 
   const [errors, setErrors] = useState({ email: "", phone: "", gstin: "", pan: "" });
 
@@ -52,6 +92,19 @@ useEffect(() => {
     }
     setErrors(prev => ({ ...prev, [field]: error }));
   };
+
+  // --- Live pincode validation ---
+  useEffect(() => {
+    if (billFromData.state && billFromData.pincode) {
+      if (!isPincodeValidForState(billFromData.state, billFromData.pincode)) {
+        setLocalPincodeError("Pincode does not match the selected state.");
+      } else {
+        setLocalPincodeError("");
+      }
+    } else {
+      setLocalPincodeError("");
+    }
+  }, [billFromData.state, billFromData.pincode]);
 
   const handleCustomFieldChange = (index, field, value) => {
     const updated = [...customFields];
@@ -112,11 +165,18 @@ useEffect(() => {
             onChange={e => setBillFromData(prev => ({ ...prev, city: e.target.value }))}
             placeholder="City (optional)"
           />
-          <Input
-            value={billFromData.pincode ?? ""}
-            onChange={e => setBillFromData(prev => ({ ...prev, pincode: e.target.value }))}
-            placeholder="Postal Code / Zip Code"
-          />
+          <div>
+            <Input
+              value={billFromData.pincode ?? ""}
+              onChange={e => setBillFromData(prev => ({ ...prev, pincode: e.target.value }))}
+              placeholder="Postal Code / Zip Code"
+            />
+            {(localPincodeError || pincodeError) && (
+              <div className="text-xs text-red-600 mt-1">
+                {localPincodeError || pincodeError}
+              </div>
+            )}
+          </div>
         </div>
 
         <Select
