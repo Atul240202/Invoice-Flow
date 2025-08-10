@@ -13,6 +13,11 @@ import { useEffect } from "react";
 import axios from "axios";
 import { isToday, isThisWeek, isThisMonth, isThisQuarter } from "date-fns";
 
+function getShortInvoiceId(index) {
+  const num = (index + 1).toString().padStart(5, "0");
+  return `INV${num}`;
+}
+
 const InvoiceHistory = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
@@ -25,6 +30,7 @@ const InvoiceHistory = () => {
 
   const [invoices, setInvoices] = useState([]);
   const [error, setError] = useState(null);
+
 
   useEffect(() => {
   const fetchInvoices = async () => {
@@ -228,6 +234,27 @@ const matchesDate = (invoiceDate) => {
 });
 
 
+// 1. Sort ascending for invoice numbers
+const invoiceNumberOrder = [...filteredInvoices].sort((a, b) => {
+  const dateA = new Date(a.invoiceDate || a.createdAt || a._id);
+  const dateB = new Date(b.invoiceDate || b.createdAt || b._id);
+  return dateA - dateB; // oldest first
+});
+
+// 2. Map _id to invoice number (index+1)
+const invoiceIdMap = {};
+invoiceNumberOrder.forEach((inv, idx) => {
+  invoiceIdMap[inv._id] = `INV${(idx + 1).toString().padStart(5, "0")}`;
+});
+
+// 3. Sort descending for display (latest first)
+const sortedInvoices = [...filteredInvoices].sort((a, b) => {
+  const dateA = new Date(a.invoiceDate || a.createdAt || a._id);
+  const dateB = new Date(b.invoiceDate || b.createdAt || b._id);
+  return dateB - dateA; // newest first
+});
+
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Paid":
@@ -392,9 +419,11 @@ const pendingAmount = filteredInvoices
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInvoices.map((invoice) => (
+                {sortedInvoices.map((invoice, idx) => (
                   <TableRow key={invoice._id} className="table-row-hover border-b border-gray-200">
-                    <TableCell className="font-bold text-black py-6 px-6">{invoice._id}</TableCell>
+                  <TableCell className="font-bold text-black py-6 px-6">
+                    {invoiceIdMap[invoice._id]}
+                  </TableCell>
                     <TableCell className="font-semibold text-black py-6">{invoice.billTo?.businessName}</TableCell>
                     <TableCell className="font-bold text-black py-6">       
   ₹{(invoice.amount ?? invoice.summary?.totalAmount ?? 0).toLocaleString()}
