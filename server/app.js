@@ -16,8 +16,8 @@ dotenv.config();
 
 const app = express();
 
-app.use(bodyParser.json({ limit: '20mb' }));
-app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors({
     origin: "http://localhost:5173",
@@ -63,9 +63,12 @@ app.post('/api/invoices/:id/download-pdf', authMiddleware, async (req, res) => {
       .populate('billFrom')
       .populate('billTo');
 
+      
     if (!invoice || !invoice.billFrom || !invoice.billTo) {
       return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
     }
+
+
 
     // Format invoice data for the HTML template
     const invoiceData = {
@@ -80,8 +83,8 @@ sgst: invoice.summary?.sgst || 0,
 
       discount: invoice.discount || 0,
       additionalCharges: invoice.additionalCharges || 0,
-       businessLogo: invoice.businessLogo ? `${baseUrl}/${invoice.businessLogo}` : '',
- terms: invoice.terms || '',
+       businessLogo: invoice.businessLogo ? `${baseUrl}${invoice.businessLogo}` : '',
+ terms: invoice.additionalOptions.terms || '',
   additionalOptions: {
     ...invoice.additionalOptions,
     qrImage: invoice.additionalOptions?.qrImage

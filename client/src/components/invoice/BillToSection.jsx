@@ -149,16 +149,28 @@ export const BillToSection = ({
                 </SelectContent>
               </Select>
             </div>
-            <Select value={billToData.country} onValueChange={(value) => setBillToData(prev => ({ ...prev, country: value }))}>
-              <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
-                <SelectValue placeholder="India" />
-              </SelectTrigger>
-              <SelectContent className="bg-white">
-                <SelectItem value="India">India</SelectItem>
-                <SelectItem value="USA">USA</SelectItem>
-                <SelectItem value="UK">UK</SelectItem>
-              </SelectContent>
-            </Select>
+            <Select
+  value={billToData.country}
+  onValueChange={(value) => setBillToData(prev => ({ ...prev, country: value }))}
+>
+  <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
+    <SelectValue placeholder="Select Country" />
+  </SelectTrigger>
+  <SelectContent className="bg-white max-h-60 overflow-y-auto">
+    {[
+      "India", "USA", "UK", "Canada", "Australia", "Germany", "France", "Italy",
+      "Spain", "Netherlands", "Sweden", "Norway", "Denmark", "Finland", "Brazil",
+      "Mexico", "China", "Japan", "South Korea", "Singapore", "Malaysia", "New Zealand",
+      "South Africa", "Russia", "UAE", "Saudi Arabia", "Egypt", "Turkey", "Thailand",
+      "Indonesia", "Philippines", "Vietnam", "Pakistan", "Bangladesh", "Sri Lanka"
+    ].map((country) => (
+      <SelectItem key={country} value={country}>
+        {country}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+
           </div>
 
           <div className="space-y-2">

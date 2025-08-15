@@ -397,7 +397,7 @@ const BankingPreviewStep = ({
     alert("Send email logic goes here");
   };
 
-  const handleSaveBankDetails = async () => {
+/*  const handleSaveBankDetails = async () => {
     if (!invoice._id) {
       toast({ title: "Missing invoice ID", variant: "destructive" });
       return;
@@ -419,7 +419,8 @@ const BankingPreviewStep = ({
     } finally {
       setLoading(false);
     }
-  };
+  }; */
+
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-4">
@@ -438,7 +439,7 @@ const BankingPreviewStep = ({
           {/* === Header: Invoice Title + Info === */}
           <div className="flex flex-col md:flex-row justify-between items-start border-b pb-6">
             <div>
-              <h1 className="text-5xl  text-purple-700 uppercase tracking-tight mb-3">
+              <h1 className="text-5xl  text-purple-700 font-extrabold uppercase tracking-tight mb-3">
                 Invoice
               </h1>
               <div className="space-y-1 text-sm">

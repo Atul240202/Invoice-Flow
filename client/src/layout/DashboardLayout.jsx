@@ -12,7 +12,7 @@ export default function DashboardLayout() {
       <AppSidebar />
       <main
         className={`flex-1 flex flex-col min-h-screen transition-all duration-300 ${
-          isOpen ? "ml-64" : "ml-0"
+          isOpen ? "ml-80" : "ml-0"
         }`}
       >
         <header className="flex items-center h-20 gap-4 px-8 border-b shadow-md">

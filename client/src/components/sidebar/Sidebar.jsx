@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 
 export function Sidebar({ className, children }) {
   return (
-    <aside className={cn("w-64 h-screen overflow-y-auto", className)}>
+    <aside className={cn("w-68 h-screen overflow-y-auto", className)}>
       {children}
     </aside>
   );
