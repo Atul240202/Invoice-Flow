@@ -41,6 +41,9 @@ app.use('/api/auth', require('./routes/authRoutes'));
 const settingsRoutes = require('./routes/settingsRoutes');
 app.use('/api/settings', settingsRoutes);
 
+const generateInvoiceRoutes = require("./routes/generateInvoiceNumber");
+app.use("/api", generateInvoiceRoutes);
+
 const invoiceRoutes = require('./routes/invoiceRoutes');
 app.use('/api/invoices', invoiceRoutes);
 

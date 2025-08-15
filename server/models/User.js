@@ -74,6 +74,16 @@ const userSchema = new mongoose.Schema({
        gstin: { type: String },
        pan: { type: String },
     },
+    bankDetails: {
+  accountHolderName: String,
+  accountNumber: String,
+  bankName: String,
+  accountType: { type: String, enum: ["Saving", "Current", "Savings"] }, 
+  currency: String,
+},
+upiDetails: {
+  upiId: String,
+},
 }, {timestamps: true });
 
 userSchema.pre('save', async function (next){

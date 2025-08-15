@@ -7,7 +7,54 @@ import { Button } from "../button";
 import { X } from "lucide-react";
 import api from "../../utils/api";
 
-export const BillToSection = ({ billToData, setBillToData, selectedClientId, setSelectedClientId }) => {
+// --- Add state-pincode mapping ---
+const STATE_PINCODE_RANGES = {
+  "Andhra Pradesh": [[500000, 534999]],
+  "Arunachal Pradesh": [[790000, 792999]],
+  "Assam": [[780000, 788999]],
+  "Bihar": [[800000, 854999]],
+  "Chhattisgarh": [[490000, 497999]],
+  "Goa": [[403000, 403999]],
+  "Gujarat": [[360000, 396999]],
+  "Haryana": [[121000, 136999]],
+  "Himachal Pradesh": [[171000, 177999]],
+  "Jharkhand": [[815000, 834999]],
+  "Karnataka": [[560000, 591999]],
+  "Kerala": [[670000, 695999]],
+  "Madhya Pradesh": [[450000, 488999]],
+  "Maharashtra": [[400000, 444999]],
+  "Manipur": [[795000, 795999]],
+  "Meghalaya": [[793000, 794999]],
+  "Mizoram": [[796000, 796999]],
+  "Nagaland": [[797000, 798999]],
+  "Odisha": [[751000, 769999]],
+  "Punjab": [[140000, 160999]],
+  "Rajasthan": [[301000, 345999]],
+  "Sikkim": [[737000, 737999]],
+  "Tamil Nadu": [[600000, 643999]],
+  "Telangana": [[500000, 509999]],
+  "Tripura": [[799000, 799999]],
+  "Uttar Pradesh": [[201000, 285999]],
+  "Uttarakhand": [[244000, 263999]],
+  "West Bengal": [[700000, 743999]],
+  // Add more if needed
+};
+
+function isPincodeValidForState(state, pincode) {
+  if (!state || !pincode) return true; // Don't show error if not filled
+  const ranges = STATE_PINCODE_RANGES[state];
+  if (!ranges) return true; // If state not mapped, skip validation
+  const pin = parseInt(pincode, 10);
+  return ranges.some(([start, end]) => pin >= start && pin <= end);
+}
+
+export const BillToSection = ({
+  billToData,
+  setBillToData,
+  selectedClientId,
+  setSelectedClientId,
+  pincodeError,
+}) => {
   const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
     "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur",
@@ -21,42 +68,61 @@ export const BillToSection = ({ billToData, setBillToData, selectedClientId, set
   const [showPAN, setShowPAN] = useState(false);
   const [customFields, setCustomFields] = useState([]);
   const [clients, setClients] = useState([]);
+  const [localPincodeError, setLocalPincodeError] = useState("");
 
+  useEffect(() => {
+    const fetchClients = async () => {
+      try {
+        const res = await api.get("/clients");
+        setClients(res.data);
+      } catch (error) {
+        console.error("Failed to fetch clients:", error);
+      }
+    };
+    fetchClients();
+  }, []);
+
+  useEffect(() => {
+    setShowEmail(!!billToData.email);
+    setShowPhone(!!billToData.phone);
+    setShowGST(!!billToData.gstin);
+    setShowPAN(!!billToData.pan);
+    setCustomFields(billToData.customFields || []);
+  }, [billToData]);
+
+  // --- Live pincode validation ---
+  useEffect(() => {
+    if (billToData.state && billToData.pincode) {
+      if (!isPincodeValidForState(billToData.state, billToData.pincode)) {
+        setLocalPincodeError("Pincode does not match the selected state.");
+      } else {
+        setLocalPincodeError("");
+      }
+    } else {
+      setLocalPincodeError("");
+    }
+  }, [billToData.state, billToData.pincode]);
 
   const addCustomField = () => setCustomFields([...customFields, { label: "", value: "" }]);
   const removeCustomField = (idx) => setCustomFields(customFields.filter((_, i) => i !== idx));
 
-  useEffect(() => {
-  const fetchClients = async () => {
-    try {
-      const res = await api.get("/clients");
-      setClients(res.data);
-    } catch (error) {
-      console.error("Failed to fetch clients:", error);
+  const handleClientSelect = (id) => {
+    setSelectedClientId(id);
+    const selected = clients.find((client) => client._id === id);
+    if (selected) {
+      setBillToData((prev) => ({
+        ...prev,
+        businessName: selected.name || "",
+        address: selected.address || "",
+        email: selected.email || "",
+        phone: selected.phone || "",
+        gstin: selected.gstNumber || "",
+        state: "",
+        city: "",
+        pincode: "",
+      }));
     }
   };
-
-  fetchClients();
-}, []);
-
-const handleClientSelect = (id) => {
-  setSelectedClientId(id);
-  const selected = clients.find((client) => client._id === id);
-  if (selected) {
-    setBillToData((prev) => ({
-      ...prev,
-      businessName: selected.name || "",
-      address: selected.address || "",
-      email: selected.email || "",
-      phone: selected.phone || "",
-      gstin: selected.gstNumber || "",
-      state: "", 
-      city: "", 
-      pincode: "", 
-    }));
-  }
-};
-
 
   return (
     <>
@@ -71,16 +137,16 @@ const handleClientSelect = (id) => {
             <div className="space-y-2">
               <Label className="text-sm text-gray-700">Select Saved Client</Label>
               <Select value={selectedClientId} onValueChange={handleClientSelect}>
-              <SelectTrigger className="w-full h-10 border-gray-300 focus:border-blue-500">
-              <SelectValue placeholder="Choose from saved clients..." />
-              </SelectTrigger>
-              <SelectContent className="bg-white max-h-60 overflow-y-auto">
-                {clients.map((client) => (
-              <SelectItem key={client._id} value={client._id}>
-                {client.name} — {client.email}
-              </SelectItem>
-              ))}
-              </SelectContent>
+                <SelectTrigger className="w-full h-10 border-gray-300 focus:border-blue-500">
+                  <SelectValue placeholder="Choose from saved clients..." />
+                </SelectTrigger>
+                <SelectContent className="bg-white max-h-60 overflow-y-auto">
+                  {clients.map((client) => (
+                    <SelectItem key={client._id} value={client._id}>
+                      {client.name} — {client.email}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
             <Select value={billToData.country} onValueChange={(value) => setBillToData(prev => ({ ...prev, country: value }))}>
@@ -120,12 +186,19 @@ const handleClientSelect = (id) => {
               className="h-10 border-gray-300 focus:border-blue-500"
               placeholder="City"
             />
-            <Input
-              value={billToData.pincode}
-              onChange={(e) => setBillToData(prev => ({ ...prev, pincode: e.target.value }))}
-              className="h-10 border-gray-300 focus:border-blue-500"
-              placeholder="Postal Code / Zip Code"
-            />
+            <div>
+              <Input
+                value={billToData.pincode}
+                onChange={(e) => setBillToData(prev => ({ ...prev, pincode: e.target.value }))}
+                className="h-10 border-gray-300 focus:border-blue-500"
+                placeholder="Postal Code / Zip Code"
+              />
+              {(localPincodeError || pincodeError) && (
+                <div className="text-xs text-red-600 mt-1">
+                  {localPincodeError || pincodeError}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="space-y-2">

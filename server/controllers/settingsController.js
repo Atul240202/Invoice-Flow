@@ -173,3 +173,31 @@ exports.saveGstConfig = async (req, res) => {
   }
 };
 
+exports.getBankDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('bankDetails upiDetails');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json({ bankDetails: user.bankDetails || {}, upiDetails: user.upiDetails || {} });
+  } catch (error) {
+    console.error("Error fetching bank details:", error);
+    res.status(500).json({ message: "Failed to fetch bank details" });
+  }
+};
+
+exports.saveBankDetails = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.bankDetails = req.body.bankDetails || {};
+    user.upiDetails = req.body.upiDetails || {};
+
+    await user.save();
+
+    res.status(200).json({ message: "Bank and UPI details saved", bankDetails: user.bankDetails, upiDetails: user.upiDetails });
+  } catch (error) {
+    console.error("Error saving bank details:", error);
+    res.status(500).json({ message: "Failed to save bank details" });
+  }
+};

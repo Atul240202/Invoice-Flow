@@ -24,6 +24,54 @@ import { useForm, FormProvider } from "react-hook-form";
 import { useLocation } from 'react-router-dom';
 import { useParams } from "react-router-dom";
 import { useNavigate } from 'react-router-dom';
+import { useFormContext } from "react-hook-form";
+
+const STATE_PINCODE_RANGES = {
+  "Andhra Pradesh": [[500000, 534999]],
+  "Arunachal Pradesh": [[790000, 792999]],
+  "Assam": [[780000, 788999]],
+  "Bihar": [[800000, 854999]],
+  "Chhattisgarh": [[490000, 497999]],
+  "Goa": [[403000, 403999]],
+  "Gujarat": [[360000, 396999]],
+  "Haryana": [[121000, 136999]],
+  "Himachal Pradesh": [[171000, 177999]],
+  "Jharkhand": [[815000, 834999]],
+  "Karnataka": [[560000, 591999]],
+  "Kerala": [[670000, 695999]],
+  "Madhya Pradesh": [[450000, 488999]],
+  "Maharashtra": [[400000, 444999]],
+  "Manipur": [[795000, 795999]],
+  "Meghalaya": [[793000, 794999]],
+  "Mizoram": [[796000, 796999]],
+  "Nagaland": [[797000, 798999]],
+  "Odisha": [[751000, 769999]],
+  "Punjab": [[140000, 160999]],
+  "Rajasthan": [[301000, 345999]],
+  "Sikkim": [[737000, 737999]],
+  "Tamil Nadu": [[600000, 643999]],
+  "Telangana": [[500000, 509999]],
+  "Tripura": [[799000, 799999]],
+  "Uttar Pradesh": [[201000, 285999]],
+  "Uttarakhand": [[244000, 263999]],
+  "West Bengal": [[700000, 743999]],
+  "Delhi": [[110000, 110099]],
+  "Jammu and Kashmir": [[180000, 194999]],
+  "Ladakh": [[194100, 194299]],
+  "Puducherry": [[605000, 605999]],
+  "Chandigarh": [[160000, 160099]],
+  "Andaman and Nicobar Islands": [[744000, 744299]],
+  "Lakshadweep": [[682555, 682559]],
+  "Dadra and Nagar Haveli and Daman and Diu": [[396210, 396239]],
+};
+
+function isPincodeValidForState(state, pincode) {
+  if (!state || !pincode) return false;
+  const ranges = STATE_PINCODE_RANGES[state];
+  if (!ranges) return false;
+  const pin = parseInt(pincode, 10);
+  return ranges.some(([start, end]) => pin >= start && pin <= end);
+}
 
 const CreateInvoice = () => {
   const { toast } = useToast();
@@ -37,6 +85,10 @@ const CreateInvoice = () => {
   const [showShippingDetails, setShowShippingDetails] = useState(false);
   const [numberFormat, setNumberFormat] = useState("indian");
   const [selectedClientId, setSelectedClientId] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [billFromError, setBillFromError] = useState("");
+const [billToError, setBillToError] = useState("");
 
   const [itemColumns, setItemColumns] = useState([
     { key: "item", label: "Item", visible: true },
@@ -45,6 +97,28 @@ const CreateInvoice = () => {
     { key: "rate", label: "Rate", visible: true },
     { key: "amount", label: "Amount", visible: true },
   ]);
+
+  // Validation handler for Bill From
+const validateBillFromPincode = () => {
+  const { state, pincode } = billFromData;
+  if (pincode && state && !isPincodeValidForState(state, pincode)) {
+    setBillFromError("Pincode does not match the selected state.");
+    return false;
+  }
+  setBillFromError("");
+  return true;
+};
+
+// Validation handler for Bill To
+const validateBillToPincode = () => {
+  const { state, pincode } = billToData;
+  if (pincode && state && !isPincodeValidForState(state, pincode)) {
+    setBillToError("Pincode does not match the selected state.");
+    return false;
+  }
+  setBillToError("");
+  return true;
+};
 
   const methods = useForm({
     defaultValues: {
@@ -221,47 +295,41 @@ const CreateInvoice = () => {
     const token = localStorage.getItem("token");
     const formData = new FormData();
 
-    // 🛡 Validation helpers (mirror backend rules)
-    const hasCompleteFields = (obj, fields) =>
-      fields.every((key) => typeof obj[key] === "string" && obj[key].trim());
+      formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
+      formData.append("invoiceDate", invoiceData?.date || "");
+      formData.append("dueDate", invoiceData?.dueDate || "");
 
-    const requiredBillFields = ["businessName", "address", "city", "state", "pincode"];
+      if (invoiceData?.businessLogo instanceof File) formData.append("businessLogo", invoiceData.businessLogo);
+    if (invoiceData?.qrFile instanceof File) formData.append("qrImage", invoiceData.qrFile);
+    // fallback: base64 string
+    else if (invoiceData?.qrPreviewUrl) formData.append("qrImageBase64", invoiceData.qrPreviewUrl);
 
-    // ✅ Validate Bill From
-    if (!hasCompleteFields(billFromData, requiredBillFields)) {
-      toast({
-        title: "Missing Sender Info",
-        description: "Please fill all required Bill From fields (Business Name, Address, City, State, Pincode).",
-        variant: "destructive",
+    if (invoiceData.attachments?.length) {
+      invoiceData.attachments.forEach((file) => {
+        if (file instanceof File) formData.append("attachments", file);
       });
-      return;
     }
 
-    // ✅ Validate Bill To
-    if (!selectedClientId?.trim() && !hasCompleteFields(billToData, requiredBillFields)) {
-      toast({
-        title: "Missing Recipient Info",
-        description: "Please select a client or fill in all Bill To fields (Business Name, Address, City, State, Pincode).",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (invoiceData?.signature instanceof File) formData.append("signature", invoiceData.signature);
 
-    // 📝 Append invoice basic info
-    formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
-    formData.append("invoiceDate", invoiceData?.date || "");
-    formData.append("dueDate", invoiceData?.dueDate || "");
-
-    if (invoiceData?.businessLogoFile) {
-  formData.append("businessLogo", invoiceData.businessLogoFile); // send actual file to backend
+      if (!selectedClientId?.trim() && !hasCompleteBillTo(billToData)) {
+  toast({
+    title: "Missing Recipient Info",
+    description: "Please select a client or manually fill in the Bill To section.",
+    variant: "destructive",
+  });
+  return;
 }
-if (invoiceData?.qrImageFile) {
-  formData.append("qrImage", invoiceData.qrImageFile); // send actual file for QR
-}
-    invoiceData.attachments?.forEach((file) => formData.append("attachments", file));
-    if (invoiceData?.signature) formData.append("signature", invoiceData.signature);
 
-    console.log("Selected Client ID:", selectedClientId);
+if (!validateBillFromPincode() | !validateBillToPincode()) {
+    toast({
+      title: "Invalid Pincode",
+      description: "Please check the pincode and state for both Bill From and Bill To.",
+      variant: "destructive",
+    });
+    return;
+  }
+      
 
     // 📝 Append structured JSON fields
     formData.append("billFrom", JSON.stringify(billFromData));
@@ -293,6 +361,16 @@ if (invoiceData?.qrImageFile) {
       headers: { Authorization: `Bearer ${token}` },
     });
 
+       setUploading(true);
+    setUploadProgress(0);
+
+    const config = {
+      headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+      onUploadProgress: (e) => {
+        if (e.total) setUploadProgress(Math.round((e.loaded * 100) / e.total));
+      },
+    };
+
     let res;
     if (isEditing) {
       res = await api.put(`/invoices/${id}`, formData, {
@@ -302,12 +380,23 @@ if (invoiceData?.qrImageFile) {
       res = await api.post("/invoices", formData, {
         headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
       });
-
-      // Store returned ID
-      if (res?.data?.invoice?._id) {
-        setInvoiceData((prev) => ({ ...prev, _id: res.data.invoice._id }));
       }
-    }
+
+        // Set the returned _id into state
+       const returnedInvoice = res?.data?.invoice || {};
+    // update local invoiceData with server URLs and _id
+    setInvoiceData(prev => ({
+      ...prev,
+      _id: returnedInvoice._id || prev._id,
+      qrImageUrl: returnedInvoice.qrImageUrl || prev.qrImageUrl,
+      businessLogoUrl: returnedInvoice.businessLogoUrl || prev.businessLogoUrl,
+      signatureUrl: returnedInvoice.signatureUrl || prev.signatureUrl,
+      attachments: returnedInvoice.attachments || prev.attachments,
+      // clear qrFile (we uploaded it) but keep preview if server didn't return URL
+      qrFile: null,
+      qrPreviewUrl: returnedInvoice.qrImageUrl ? null : prev.qrPreviewUrl,
+    }));
+      
 
     toast({
       title: "Success",
@@ -536,10 +625,11 @@ if (invoiceData?.qrImageFile) {
           </Button>
           <Button
             onClick={handleSaveAndContinue}
+            disabled={uploading}
             size="lg"
             className="px-8 bg-blue-500 hover:bg-blue-50 text-white"
           >
-            Save & Continue
+            {uploading ? `Uploading... ${uploadProgress}%` : "Save & Continue"}
           </Button>
         </div>
        
