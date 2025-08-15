@@ -20,14 +20,16 @@ export const InvoiceHeader = ({ invoiceData, setInvoiceData }) => {
   const file = event.target.files[0];
   if (!file) return;
 
+  // Convert to Base64 for instant preview
   const base64 = await toBase64(file);
 
   setInvoiceData(prev => ({
     ...prev,
-    businessLogo: base64,         // for preview & PDF
-    businessLogoFile: file,       // optional: if you need raw File later
+    businessLogo: base64,  // For preview & PDF preview generation
+    businessLogoFile: file // For backend file upload
   }));
 };
+
 
 
   return (

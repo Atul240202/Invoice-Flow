@@ -65,21 +65,28 @@ export const TotalsSection = ({ invoiceData, setInvoiceData, gstConfig, conversi
 
   
 
-  const handleQRUpload = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => setQrImage(reader.result);
+ const handleQRUpload = (e) => {
+  const file = e.target.files[0];
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64 = reader.result;
+
+      // Set preview image (local)
+      setQrImage(base64);
+
+      // Set in invoice data for banking preview & PDF
       setInvoiceData(prev => ({
         ...prev,
-        qrImage: file 
+        qrImage: base64,     // Base64 for preview & PDF
+        qrImageFile: file    // File for backend
       }));
-      reader.readAsDataURL(file);
-    } else {
-      alert("Please upload a valid image file.");
-    }
-  };
-  
+    };
+    reader.readAsDataURL(file);
+  } else {
+    alert("Please upload a valid image file.");
+  }
+};
 
   const handleUploadClick = () => {
     if (fileInputRef.current) fileInputRef.current.click();

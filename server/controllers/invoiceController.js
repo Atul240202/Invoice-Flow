@@ -50,29 +50,32 @@ let clientId = null;
       }
     }
 
-    const invoice = new Invoice({
-      user: req.user._id,
-      billToDetail: clientId,
-      invoiceNumber,
-      invoiceDate,
-      dueDate,
-      businessLogo: req.files['businessLogo'] ? req.files['businessLogo'][0].path : '',
-      billFrom: safeParse(billFrom),
-      billTo: parsedBillTo,
-      shipping: safeParse(shipping),
-      gstConfig: safeParse(gstConfig),
-      currency,
-      items: safeParse(items),
-      summary: parsedSummary,
-      amount: parsedSummary?.totalAmount || 0,
-      additionalOptions: {
-        ...safeParse(additionalOptions),
-        attachments: req.files['attachments']?.map(file => file.path) || [],
-        qrImage: req.files['qrImage']?.[0]?.path || '',
-        signature: req.files['signature']?.[0]?.path || '',
-      },
-      status: status || "Draft",
-    });
+    const bankDetails = req.body.bankDetails ? JSON.parse(req.body.bankDetails) : {};
+
+   const invoice = new Invoice({
+  user: req.user._id,
+  billToDetail: clientId,
+  invoiceNumber,
+  invoiceDate,
+  dueDate,
+  businessLogo: req.files['businessLogo'] ? req.files['businessLogo'][0].path : '',
+  billFrom: safeParse(billFrom),
+  billTo: parsedBillTo,
+  shipping: safeParse(shipping),
+  gstConfig: safeParse(gstConfig),
+  currency,
+  items: safeParse(items),
+  summary: parsedSummary,
+  amount: parsedSummary?.totalAmount || 0,
+  additionalOptions: {
+    ...safeParse(additionalOptions),
+    attachments: req.files['attachments']?.map(file => file.path) || [],
+    qrImage: req.files['qrImage']?.[0]?.path || '',
+    signature: req.files['signature']?.[0]?.path || '',
+  },
+  bankDetails,
+  status: status || "Draft",
+});
 
   const hasCompleteManualBillTo = (bill) => {
   const required = ["businessName", "address", "city", "state", "pincode"];
@@ -212,7 +215,8 @@ exports.updateInvoice = async (req, res) => {
         qrImage: req.files?.qrImage?.[0]?.path || '',
       };
     }
-
+     
+    
     if (req.files?.businessLogo) {
       updatedFields.businessLogo = req.files.businessLogo[0].path;
     }

@@ -131,6 +131,7 @@ const CreateInvoice = () => {
 
   const conversionRate = exchangeRates[invoiceData.currency] || 1;
   const currencySymbol = currencySymbols[invoiceData.currency] || "₹";
+  
 
   useEffect(() => {
     const fetchBillFromData = async () => {
@@ -142,15 +143,7 @@ const CreateInvoice = () => {
           },
         });
         if (res.data?.billFrom) {
-          setBillFromData(prev => ({
-            ...prev,
-            ...res.data.billFrom,
-            state: res.data.billFrom?.state ?? "",
-            email: res.data.billFrom?.email ?? "",
-            phone: res.data.billFrom?.phone ?? "",
-            gstin: res.data.billFrom?.gstin ?? "",
-            pan: res.data.billFrom?.pan ?? "",
-          }));
+          setBillFromData(res.data.billFrom);
         }
       } catch (error) {
         console.error("Failed to fetch bill-from data:", error);
@@ -183,6 +176,18 @@ const CreateInvoice = () => {
         const res = await api.get(`/invoices/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+         
+         // ✅ FIX: convert stored logo path to full URL for preview
+      if (data.invoiceData?.businessLogo) {
+        data.invoiceData.businessLogo =
+          `${process.env.REACT_APP_API_BASE_URL || "http://localhost:5000"}/${data.invoiceData.businessLogo}`;
+      }
+
+      if (data.invoiceData?.qrImageFile) {
+        data.invoiceData.qrImageFile =
+          `${process.env.REACT_APP_API_BASE_URL || "http://localhost:5000"}/${data.invoiceData.qrImageFile}`;
+      }
+
 
         const data = res.data;
         setInvoiceData(data.invoiceData || {});
@@ -208,101 +213,119 @@ const CreateInvoice = () => {
   console.log("currentStep updated to:", currentStep);
 }, [currentStep]);
 
-const hasCompleteBillTo = (bill) => {
-  const required = ["businessName", "address", "city", "state", "pincode"];
-  return required.every((k) => bill[k]?.trim());
-};
-
 
   const handleSaveAndContinue = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
+  console.log("Save and continue");
 
-      formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
-      formData.append("invoiceDate", invoiceData?.date || "");
-      formData.append("dueDate", invoiceData?.dueDate || "");
+  try {
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
 
-      if (invoiceData?.businessLogo) formData.append("businessLogo", invoiceData.businessLogo);
-      if (invoiceData?.qrImage) formData.append("qrImage", invoiceData.qrImage);
-      invoiceData.attachments?.forEach((file) => formData.append("attachments", file));
-      if (invoiceData?.signature) formData.append("signature", invoiceData.signature);
+    // 🛡 Validation helpers (mirror backend rules)
+    const hasCompleteFields = (obj, fields) =>
+      fields.every((key) => typeof obj[key] === "string" && obj[key].trim());
 
-      if (!selectedClientId?.trim() && !hasCompleteBillTo(billToData)) {
-  toast({
-    title: "Missing Recipient Info",
-    description: "Please select a client or manually fill in the Bill To section.",
-    variant: "destructive",
-  });
-  return;
-}
-      
-console.log("Selected Client ID:", selectedClientId);
+    const requiredBillFields = ["businessName", "address", "city", "state", "pincode"];
 
-      formData.append("billFrom", JSON.stringify(billFromData));
-      formData.append("billTo", JSON.stringify(billToData));
-      if (selectedClientId?.trim()) {
-        formData.append("billToDetail", selectedClientId);
-      }
-      formData.append("shipping", JSON.stringify(shippingDetails));
-      formData.append("gstConfig", JSON.stringify(gstConfig));
-      formData.append("items", JSON.stringify(invoiceData.items));
-      formData.append("summary", JSON.stringify({
-        subtotal: invoiceData.subtotal,
-        cgst: invoiceData.cgst,
-        sgst: invoiceData.sgst,
-        discount: invoiceData.discount,
-        totalAmount: invoiceData.grandTotal,
-      }));
-      formData.append("additionalOptions", JSON.stringify({
-        terms: invoiceData.terms,
-        notes: invoiceData.notes,
-        attachments: [],
-        contactDetails: invoiceData.contactDetails,
-        additionalInfo: invoiceData.additionalInfo || "",
-      }));
-      formData.append("currency", invoiceData.currency);
-      formData.append("status", "draft");
-      const shouldSaveAsClient = invoiceData.saveAsClient === true;
-      formData.append("saveAsClient", shouldSaveAsClient ? "true" : "false");
-
-      // Save bill-from data
-      await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      let res;
-      if (isEditing) {
-        res = await api.put(`/invoices/${id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-        });
-      } else {
-        res = await api.post("/invoices", formData, {
-          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-        });
-
-        // 👇 Set the returned _id into state
-  if (res?.data?.invoice?._id) {
-    setInvoiceData((prev) => ({ ...prev, _id: res.data.invoice._id }));
-  }
-      }
-
+    // ✅ Validate Bill From
+    if (!hasCompleteFields(billFromData, requiredBillFields)) {
       toast({
-        title: "Success",
-        description: isEditing ? "Invoice updated successfully." : "Invoice created successfully.",
-      });
-      console.log("Current Step:", currentStep);
-      setCurrentStep(2);
-      console.log("Going to Step 2");
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong while saving invoice.",
+        title: "Missing Sender Info",
+        description: "Please fill all required Bill From fields (Business Name, Address, City, State, Pincode).",
         variant: "destructive",
       });
+      return;
     }
-  };
+
+    // ✅ Validate Bill To
+    if (!selectedClientId?.trim() && !hasCompleteFields(billToData, requiredBillFields)) {
+      toast({
+        title: "Missing Recipient Info",
+        description: "Please select a client or fill in all Bill To fields (Business Name, Address, City, State, Pincode).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 📝 Append invoice basic info
+    formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
+    formData.append("invoiceDate", invoiceData?.date || "");
+    formData.append("dueDate", invoiceData?.dueDate || "");
+
+    if (invoiceData?.businessLogoFile) {
+  formData.append("businessLogo", invoiceData.businessLogoFile); // send actual file to backend
+}
+if (invoiceData?.qrImageFile) {
+  formData.append("qrImage", invoiceData.qrImageFile); // send actual file for QR
+}
+    invoiceData.attachments?.forEach((file) => formData.append("attachments", file));
+    if (invoiceData?.signature) formData.append("signature", invoiceData.signature);
+
+    console.log("Selected Client ID:", selectedClientId);
+
+    // 📝 Append structured JSON fields
+    formData.append("billFrom", JSON.stringify(billFromData));
+    formData.append("billTo", JSON.stringify(billToData));
+    formData.append("billToDetail", selectedClientId);
+    formData.append("shipping", JSON.stringify(shippingDetails));
+    formData.append("gstConfig", JSON.stringify(gstConfig));
+    formData.append("items", JSON.stringify(invoiceData.items));
+    formData.append("summary", JSON.stringify({
+      subtotal: invoiceData.subtotal,
+      cgst: invoiceData.cgst,
+      sgst: invoiceData.sgst,
+      discount: invoiceData.discount,
+      totalAmount: invoiceData.grandTotal,
+    }));
+    formData.append("additionalOptions", JSON.stringify({
+      terms: invoiceData.terms,
+      notes: invoiceData.notes,
+      attachments: [],
+      contactDetails: invoiceData.contactDetails,
+      additionalInfo: invoiceData.additionalInfo || "",
+    }));
+    formData.append("currency", invoiceData.currency);
+    formData.append("status", "draft");
+    formData.append("saveAsClient", invoiceData.saveAsClient);
+
+    // 💾 Save Bill From settings
+    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    let res;
+    if (isEditing) {
+      res = await api.put(`/invoices/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+      });
+    } else {
+      res = await api.post("/invoices", formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+      });
+
+      // Store returned ID
+      if (res?.data?.invoice?._id) {
+        setInvoiceData((prev) => ({ ...prev, _id: res.data.invoice._id }));
+      }
+    }
+
+    toast({
+      title: "Success",
+      description: isEditing ? "Invoice updated successfully." : "Invoice created successfully.",
+    });
+
+    console.log("Current Step:", currentStep);
+    setCurrentStep(2);
+    console.log("Going to Step 2");
+  } catch (error) {
+    console.error("Error creating invoice:", error);
+    toast({
+      title: "Error",
+      description: "Something went wrong while saving invoice.",
+      variant: "destructive",
+    });
+  }
+};
 
   const handleSaveDraft = () => {
     toast({
@@ -359,22 +382,10 @@ console.log("Selected Client ID:", selectedClientId);
           <BillToSection
             billToData={billToData}
             setBillToData={setBillToData}
-            selectedClientId={selectedClientId}
-            setSelectedClientId={setSelectedClientId}
+            selectedClientId={selectedClientId} 
+  setSelectedClientId={setSelectedClientId}
           />
         </div>
-        <label className="flex items-center gap-2 text-sm mt-2">
-        <input
-          type="checkbox"
-          checked={invoiceData.saveAsClient}
-          onChange={(e) =>
-            setInvoiceData((prev) => ({ ...prev, saveAsClient: e.target.checked }))
-          }
-          className="rounded border-gray-300"
-        />
-         Save as client for future use
-        </label>
-
 
         {/* Action Buttons Row */}
         

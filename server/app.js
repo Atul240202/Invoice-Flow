@@ -8,6 +8,7 @@ const puppeteer = require('puppeteer');
 const generateInvoiceHTML = require('./invoiceTemplate');
 const fs = require('fs');
 const Invoice = require('./models/Invoice');
+const authMiddleware = require("./middlewares/authMiddleware");
 
 dotenv.config();
 
@@ -26,6 +27,8 @@ app.use(cors({
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+const reportRoutes = require('./routes/reportRoutes');
+app.use('/api/reports', reportRoutes);
 
 connectDB();
 
@@ -44,41 +47,47 @@ app.use('/api/invoices', invoiceRoutes);
 const clientRoutes = require('./routes/clientRoutes');
 app.use('/api/clients', clientRoutes);
 
-const expenseRoutes = require("./routes/expenseRoutes");
-app.use("/api/expenses", expenseRoutes);
+const baseUrl = process.env.BASE_URL || "http://localhost:5000";
 
-app.use("/api/reports", require("./routes/reportRoutes"));
+app.post('/api/invoices/:id/download-pdf', authMiddleware, async (req, res) => {
 
-app.use("/api/dashboard", require("./routes/dashboardRoutes"));
-
-app.post('/api/invoices/:id/download-pdf', async (req, res) => {
   try {
+    
     const invoiceId = req.params.id;
 
+    // Fetch invoice with populated client/company data if stored separately
     const invoice = await Invoice.findById(invoiceId)
-      .populate("billFrom")
-      .populate("billTo");
+      .populate('billFrom')
+      .populate('billTo');
 
     if (!invoice || !invoice.billFrom || !invoice.billTo) {
       return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
     }
 
+    // Format invoice data for the HTML template
     const invoiceData = {
       invoiceNumber: invoice.invoiceNumber,
-      date: invoice.invoiceDate.toLocaleDateString("en-IN"),
-      dueDate: invoice.dueDate.toLocaleDateString("en-IN"),
-      items: invoice.items,
-      gstRate: invoice.gstRate,
-      igst: invoice.igst,
-      cgst: invoice.cgst,
-      sgst: invoice.sgst,
-      discount: invoice.discount,
-      additionalCharges: invoice.additionalCharges,
-      businessLogo: invoice.businessLogo,
-      signature: invoice.signature,
-      qrCode: invoice.qrCode,
-      terms: invoice.terms,
+      date: invoice.invoiceDate?.toLocaleDateString("en-IN") || '',
+      dueDate: invoice.dueDate?.toLocaleDateString("en-IN") || '',
+      items: invoice.items || [],
+      gstRate: invoice.gstRate || 0,
+     igst: invoice.summary?.igst || 0,
+cgst: invoice.summary?.cgst || 0,
+sgst: invoice.summary?.sgst || 0,
 
+      discount: invoice.discount || 0,
+      additionalCharges: invoice.additionalCharges || 0,
+       businessLogo: invoice.businessLogo ? `${baseUrl}/${invoice.businessLogo}` : '',
+ terms: invoice.terms || '',
+  additionalOptions: {
+    ...invoice.additionalOptions,
+    qrImage: invoice.additionalOptions?.qrImage
+      ? `${baseUrl}/${invoice.additionalOptions.qrImage}`
+      : '',
+    signature: invoice.additionalOptions?.signature
+      ? `${baseUrl}/${invoice.additionalOptions.signature}`
+      : '',
+  },
       billFromData: {
         businessName: invoice.billFrom.businessName,
         address: invoice.billFrom.address,
@@ -95,90 +104,28 @@ app.post('/api/invoices/:id/download-pdf', async (req, res) => {
         state: invoice.billTo.state,
         pincode: invoice.billTo.pincode,
         gstin: invoice.billTo.gstin,
-      }
-    };
-
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-
-    const htmlContent = generateInvoiceHTML(invoiceData);
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-
-    const pdfBuffer = await page.pdf({ format: 'A4',
-         printBackground: true,
-     });
-    await browser.close();
-
-    const filename = `invoice-${invoice.invoiceNumber || invoice._id}.pdf`;
-
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    });
-
-    res.send(pdfBuffer);
-  } catch (err) {
-    console.error("PDF generation error:", err);
-    res.status(500).json({ error: 'Failed to generate PDF.' });
-  }
-});
-
-app.get('/api/invoices/:id/download-pdf', async (req, res) => {
-  try {
-    const invoiceId = req.params.id;
-
-    const invoice = await Invoice.findById(invoiceId)
-      .populate("billFrom")
-      .populate("billTo");
-
-    if (!invoice || !invoice.billFrom || !invoice.billTo) {
-      return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
-    }
-
-    const invoiceData = {
-      invoiceNumber: invoice.invoiceNumber,
-      date: invoice.invoiceDate.toLocaleDateString("en-IN"),
-      dueDate: invoice.dueDate.toLocaleDateString("en-IN"),
-      items: invoice.items,
-      gstRate: invoice.gstRate,
-      igst: invoice.igst,
-      cgst: invoice.cgst,
-      sgst: invoice.sgst,
-      discount: invoice.discount,
-      additionalCharges: invoice.additionalCharges,
-      businessLogo: invoice.businessLogo,
-      signature: invoice.signature,
-      qrCode: invoice.qrCode,
-      terms: invoice.terms,
-
-      billFromData: {
-        businessName: invoice.billFrom.businessName,
-        address: invoice.billFrom.address,
-        city: invoice.billFrom.city,
-        state: invoice.billFrom.state,
-        pincode: invoice.billFrom.pincode,
-        gstin: invoice.billFrom.gstin,
-        pan: invoice.billFrom.pan,
       },
-      billToData: {
-        businessName: invoice.billTo.businessName,
-        address: invoice.billTo.address,
-        city: invoice.billTo.city,
-        state: invoice.billTo.state,
-        pincode: invoice.billTo.pincode,
-        gstin: invoice.billTo.gstin,
-      }
+      bankDetails: invoice.bankDetails || {},
+      
     };
 
-    const browser = await puppeteer.launch();
+    // Launch Puppeteer with safer deployment options
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
+
+    
+    
 
     const htmlContent = generateInvoiceHTML(invoiceData);
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-    const pdfBuffer = await page.pdf({ format: 'A4',
-         printBackground: true,
-     });
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true
+    });
     await browser.close();
 
     const filename = `invoice-${invoice.invoiceNumber || invoice._id}.pdf`;
@@ -194,6 +141,7 @@ app.get('/api/invoices/:id/download-pdf', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate PDF.' });
   }
 });
+
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

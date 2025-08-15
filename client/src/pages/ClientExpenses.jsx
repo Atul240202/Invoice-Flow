@@ -294,6 +294,53 @@ const handleExportReport = async () => {
   }
 };
 
+const handleExportGSTR3BPDF = async () => {
+  const res = await fetch("http://localhost:5000/api/reports/export-gstr3b-pdf", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({ from: "2025-07-01", to: "2025-07-31" }),
+  });
+
+  if (!res.ok) {
+    console.error("Failed to export GSTR-3B PDF");
+    return;
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "GSTR-3B-Report.pdf";
+  a.click();
+};
+
+const handleExportGSTR3BExcel = async () => {
+  const res = await fetch("http://localhost:5000/api/reports/export-gstr3b-excel", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+    body: JSON.stringify({ from: "2025-07-01", to: "2025-07-31" }),
+  });
+
+  if (!res.ok) {
+    console.error("Failed to export GSTR-3B Excel");
+    return;
+  }
+
+  const blob = await res.blob();
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "GSTR-3B-Report.xlsx";
+  a.click();
+};
+
+
   return (
     <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
       {/* Header */}
@@ -874,10 +921,22 @@ const handleExportReport = async () => {
                   </div>
 
                   <div className="pt-4 border-t border-gray-200">
-                    <Button className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-green-700 hover:to-green-800 text-white font-semibold">
-                     
-                      Export GSTR-3B Format
-                    </Button>
+                   <Button
+  onClick={handleExportGSTR3BPDF}
+  className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-green-700 hover:to-green-800 text-white font-semibold"
+>
+  Export GSTR-3B PDF
+</Button>
+</div>
+ <div className="pt-2 border-gray-200">
+
+<Button
+  onClick={handleExportGSTR3BExcel}
+  className="w-full h-12 bg-gradient-to-r from-blue-400 to-blue-500 hover:from-green-600 hover:to-green-700 text-white font-semibold"
+>
+  Export GSTR-3B Excel
+</Button>
+
                   </div>
                 </div>
               </CardContent>

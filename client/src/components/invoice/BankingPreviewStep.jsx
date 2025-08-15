@@ -30,10 +30,8 @@ const [loading, setLoading] = useState(false);
     goToStep(2); // or whatever step number you want
   };
 
-  const handleSaveBankDetails = (data) => {
-    setBankingDetails(data);
-    setShowBankForm(false);
-  };
+ 
+  
 
 if (!invoiceData) {
   console.warn("invoiceData is missing.");
@@ -168,6 +166,30 @@ if (!Array.isArray(items)) {
     alert("Send email logic goes here");
   };
 
+  const handleSaveBankDetails = async () => {
+    if (!invoice._id) {
+      toast({ title: "Missing invoice ID", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `http://localhost:5000/api/invoices/${invoice._id}/bank-details`,
+        { bankingDetails }, // backend should merge this into invoice.bankingDetails
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast({ title: "Bank details saved!" });
+    } catch (err) {
+      console.error("Save error:", err);
+      toast({ title: "Error saving bank details", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-4">
       <Card className="shadow-lg border border-gray-200 rounded-2xl">
@@ -287,10 +309,24 @@ if (!Array.isArray(items)) {
 </div>
 
 
-  {/* === Totals Section === */}
-<div className="flex justify-end mt-6">
+{/* === Totals Section with QR Code on Left === */}
+<div className="flex justify-between mt-6 gap-4">
+
+  {/* Left Side - QR Code */}
+  {invoiceData.qrImage && (
+    <div className="flex flex-col items-center justify-center p-10">
+      <p className="text-sm text-gray-600 mb-2">Scan to Pay</p>
+      <img
+        src={invoiceData.qrImage}
+        alt="QR Code"
+        className="h-32 w-32 border rounded shadow-sm"
+      />
+    </div>
+  )}
+
+  {/* Right Side - Totals */}
   <div className="w-full md:w-1/2 lg:w-1/3 border rounded-xl bg-purple-50 p-5 space-y-3 shadow-sm">
-    
+
     {/* Divider with "Total" label centered */}
     <div className="flex items-center justify-between mb-2">
       <hr className="flex-grow border-purple-300" />
@@ -343,7 +379,9 @@ if (!Array.isArray(items)) {
       </p>
     </div>
   </div>
+
 </div>
+
 
 
   {/* === Totals + Bank + Signature === */}
@@ -374,6 +412,7 @@ if (!Array.isArray(items)) {
 
     </div>
   </div>
+
 
 
   {/* === Signature on RHS === */}

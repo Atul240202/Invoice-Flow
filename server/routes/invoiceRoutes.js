@@ -123,6 +123,20 @@ router.put(
 
 router.delete('/:id', authMiddleware, deleteInvoice);
 
+router.patch("/:id/bank-details", authMiddleware, async (req, res) => {
+  try {
+    const invoice = await Invoice.findByIdAndUpdate(
+      req.params.id,
+      { bankingDetails: req.body.bankingDetails },
+      { new: true }
+    );
+    res.json(invoice);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save bank details" });
+  }
+});
+
+
 router.put("/:id/bank-details", authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
@@ -200,6 +214,7 @@ router.get('/recent', authMiddleware, async (req, res) => {
   }
 });
 */
+
 
 
 module.exports = router;

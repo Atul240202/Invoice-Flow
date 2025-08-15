@@ -214,3 +214,55 @@ exports.getExpensesFiltered = async (from, to, type, userId) => {
   const expenses = await Expense.find(query).sort({ date: -1 });
   return expenses;
 };
+
+exports.exportGSTR3B = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { from, to } = req.body;
+
+    const expenses = await Expense.find({
+      user: userId,
+      date: { $gte: new Date(from), $lte: new Date(to) },
+    });
+
+    const summary = {
+      outwardTaxableSupplies: 0,
+      exempt: 0,
+      nilRated: 0,
+      itcEligible: 0,
+    };
+
+    expenses.forEach((e) => {
+      const amt = parseFloat(e.amount || 0);
+      if (e.gstPercent > 0) {
+        summary.outwardTaxableSupplies += amt;
+        if (e.itcEligible) {
+          summary.itcEligible += (amt * e.gstPercent) / 100;
+        }
+      } else {
+        summary.exempt += amt;
+      }
+    });
+
+    res.status(200).json({
+      from,
+      to,
+      gstReport: {
+        section_3_1: {
+          a: summary.outwardTaxableSupplies.toFixed(2),
+          b: "0.00", // export
+          c: "0.00", // SEZ
+          d: "0.00", // deemed
+          e: summary.exempt.toFixed(2),
+          f: "0.00",
+        },
+        section_4: {
+          eligibleITC: summary.itcEligible.toFixed(2),
+        },
+      },
+    });
+  } catch (err) {
+    console.error("GSTR-3B Export Error:", err);
+    res.status(500).json({ message: "Failed to export GSTR-3B" });
+  }
+};
