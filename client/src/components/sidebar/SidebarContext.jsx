@@ -8,7 +8,7 @@ export function SidebarProvider({ children }) {
   const toggleSidebar = () => setIsOpen((prev) => !prev);
 
   return (
-    <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>
+    <SidebarContext.Provider value={{ isOpen,  setIsOpen,toggleSidebar }}>
       {children}
     </SidebarContext.Provider>
   );
