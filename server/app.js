@@ -18,9 +18,12 @@ app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-}))
+  origin: [
+    "http://localhost:5173",                        // local dev
+    "https://invoice-flow.onrender.com"    // deployed frontend
+  ],
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
