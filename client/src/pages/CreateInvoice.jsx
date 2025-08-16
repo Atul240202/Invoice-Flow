@@ -89,6 +89,7 @@ const CreateInvoice = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [billFromError, setBillFromError] = useState("");
 const [billToError, setBillToError] = useState("");
+const [emailError, setEmailError] = useState("");
 
   const [itemColumns, setItemColumns] = useState([
     { key: "item", label: "Item", visible: true },
@@ -371,6 +372,16 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
       },
     };
 
+      if (!billToData.email) {
+    setEmailError("Email is required");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billToData.email)) {
+    setEmailError("Invalid email format");
+    return;
+  }
+  setEmailError("");
+
       let res;
       if (isEditing) {
         res = await api.put(`/invoices/${id}`, formData, {
@@ -422,6 +433,12 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
     });
   };
 
+  const handleBackFromPreview = () => {
+  setCurrentStep(1);
+  setEmailError("");
+  methods.clearErrors && methods.clearErrors();
+};
+
   return (
     <FormProvider {...methods}>
   <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -433,7 +450,7 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
         billToData={billToData}
         gstConfig={gstConfig}
         shippingDetails={shippingDetails}
-        onBack={() => setCurrentStep(1)}
+        onBack={handleBackFromPreview}
         goToStep={setCurrentStep} 
       />
     ) : (
@@ -472,6 +489,9 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
             setBillToData={setBillToData}
             selectedClientId={selectedClientId}
             setSelectedClientId={setSelectedClientId}
+              pincodeError={billToError}
+    emailError={emailError}
+  setEmailError={setEmailError}
           />
         </div>
         <label className="flex items-center gap-2 text-sm mt-2">

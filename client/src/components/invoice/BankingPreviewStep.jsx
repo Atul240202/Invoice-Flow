@@ -392,10 +392,67 @@ const BankingPreviewStep = ({
     }
   };
 
-  const handleSendEmail = () => {
-    // Add email sending logic
-    alert("Send email logic goes here");
-  };
+  // ...existing imports...
+
+const handleSendEmail = async () => {
+  if (!billToData?.email) {
+    toast?.({
+      title: "No Email",
+      description: "No recipient email found in Bill To section.",
+      variant: "destructive",
+    });
+    return;
+  }
+  if (!invoiceData?._id) {
+    toast?.({
+      title: "No Invoice",
+      description: "Invoice must be saved before sending.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setLoading(true);
+  try {
+    // 1. Generate PDF and get its URL (reuse your download endpoint)
+    const token = localStorage.getItem("token");
+    const pdfRes = await axios.post(
+      `${API_BASE}/api/invoices/${invoiceData._id}/download-pdf`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+    // Convert blob to base64 (if you want to send from frontend, but better to send from backend)
+    // Instead, upload PDF to your backend and let backend send email
+
+    // 2. Call backend to send email with PDF
+    await axios.post(
+      `${API_BASE}/api/invoices/${invoiceData._id}/send-email`,
+      {
+        to: billToData.email,
+        pdfUrl: `${API_BASE}/api/invoices/${invoiceData._id}/download-pdf`,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    toast?.({
+      title: "Email Sent",
+      description: `Invoice sent to ${billToData.email}`,
+    });
+  } catch (err) {
+    toast?.({
+      title: "Failed to Send Email",
+      description: err?.response?.data?.error || err.message,
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-4">

@@ -11,8 +11,6 @@ const Invoice = require('./models/Invoice');
 
 dotenv.config();
 
-
-
 const app = express();
 
 app.use(bodyParser.json({ limit: '20mb' }));

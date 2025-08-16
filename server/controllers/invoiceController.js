@@ -293,3 +293,41 @@ exports.deleteInvoice = async (req, res) => {
   }
 };*/
 
+const axios = require("axios"); // already imported above
+
+exports.sendInvoiceEmail = async (req, res) => {
+  const { id } = req.params;
+  const { to, pdfUrl } = req.body;
+
+  try {
+    // Download the PDF from your server
+    const pdfRes = await axios.get(pdfUrl, { responseType: "arraybuffer" });
+    const pdfBase64 = Buffer.from(pdfRes.data, "binary").toString("base64");
+
+    // Send email via Brevo
+    await axios.post(
+      "https://api.brevo.com/v3/smtp/email",
+      {
+        sender: { name: "ApnaProject", email: "kudakemruganksha@gmail.com" },
+        to: [{ email: to }],
+        subject: "Your Invoice",
+        htmlContent: "<p>Dear customer, please find your invoice attached.</p>",
+        attachment: [
+          {
+            name: `invoice-${id}.pdf`,
+            content: pdfBase64,
+          },
+        ],
+      },
+      {
+        headers: {
+          "api-key": process.env.BREVO_API_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to send email", details: err.message });
+  }
+};

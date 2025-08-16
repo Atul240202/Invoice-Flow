@@ -12,6 +12,7 @@ const {
     updateInvoice,
     deleteInvoice,
    // generateInvoicePDF
+   sendInvoiceEmail,
 } = require("../controllers/invoiceController");
 
 
@@ -213,6 +214,6 @@ router.get("/generate-invoice/:prefix", async (req, res) => {
   }
 });
 
-
+router.post("/:id/send-email", authMiddleware, sendInvoiceEmail);
 
 module.exports = router;
