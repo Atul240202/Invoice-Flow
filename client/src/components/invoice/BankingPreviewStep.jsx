@@ -454,6 +454,31 @@ const handleSendEmail = async () => {
   }
 };
 
+/*  const handleSaveBankDetails = async () => {
+    if (!invoice._id) {
+      toast({ title: "Missing invoice ID", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.patch(
+        `http://localhost:5000/api/invoices/${invoice._id}/bank-details`,
+        { bankingDetails }, // backend should merge this into invoice.bankingDetails
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      toast({ title: "Bank details saved!" });
+    } catch (err) {
+      console.error("Save error:", err);
+      toast({ title: "Error saving bank details", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }; */
+
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-4">
       <Card className="shadow-lg border border-gray-200 rounded-2xl">
@@ -471,7 +496,7 @@ const handleSendEmail = async () => {
           {/* === Header: Invoice Title + Info === */}
           <div className="flex flex-col md:flex-row justify-between items-start border-b pb-6">
             <div>
-              <h1 className="text-5xl  text-purple-700 uppercase tracking-tight mb-3">
+              <h1 className="text-5xl  text-purple-700 font-extrabold uppercase tracking-tight mb-3">
                 Invoice
               </h1>
               <div className="space-y-1 text-sm">
@@ -598,6 +623,7 @@ const handleSendEmail = async () => {
             </table>
           </div>
 
+
           {/* === Totals Section === */}
           <div className="flex justify-end mt-6">
             <div className="w-full md:w-1/2 lg:w-1/3 border rounded-xl bg-purple-50 p-5 space-y-3 shadow-sm">
@@ -659,7 +685,9 @@ const handleSendEmail = async () => {
                 </p>
               </div>
             </div>
-          </div>
+          
+</div>
+
 
           {/* === Totals + Bank + Signature === */}
           <div className="grid md:grid-cols-2 gap-4 border-t pt-6 text-sm">
@@ -703,6 +731,7 @@ const handleSendEmail = async () => {
                 )}
               </div>
             </div>
+
 
             {/* === Signature on RHS === */}
             {invoiceData.signature && (

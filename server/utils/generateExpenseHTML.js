@@ -21,7 +21,7 @@ function generateExpenseReportHTML({ expenses = [] }) {
         <td>${e.description || "-"}</td>
         <td style="text-align:right;">₹${parseFloat(e.amount).toFixed(2)}</td>
         <td style="text-align:right;">${e.gstPercent || 0}%</td>
-        <td style="text-align:center;">${e.itcEligible ? "✅" : "❌"}</td>
+        <td style="text-align:center;">${e.itcEligible ? "Yes" : "No"}</td>
       </tr>`
     )
     .join("");

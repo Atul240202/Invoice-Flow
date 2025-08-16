@@ -5,6 +5,7 @@ import { Button } from "../button";
 import { Upload, Calendar } from "lucide-react";
 
 export const InvoiceHeader = ({ invoiceData, setInvoiceData }) => {
+ 
 
   const toBase64 = (file) =>
   new Promise((resolve, reject) => {
@@ -16,19 +17,30 @@ export const InvoiceHeader = ({ invoiceData, setInvoiceData }) => {
 
 
 
-  const handleLogoUpload = async (event) => {
-  const file = event.target.files[0];
+const handleLogoUpload = (e) => {
+  const file = e.target.files?.[0];
   if (!file) return;
 
-  const base64 = await toBase64(file);
+  // Only allow image files
+  if (!file.type.startsWith("image/")) {
+    alert("Please upload an image (png/jpg).");
+    return;
+  }
 
+  // 5 MB size limit
+  const MAX_LOGO_SIZE = 5 * 1024 * 1024;
+  if (file.size > MAX_LOGO_SIZE) {
+    alert("Max file size 5 MB.");
+    return;
+  }
+
+  // Store the File object and create preview URL
   setInvoiceData(prev => ({
     ...prev,
-    businessLogo: base64,         // for preview & PDF
-    businessLogoFile: file,       // optional: if you need raw File later
+    businessLogo: file, // Store File object for upload
+    businessLogoPreview: URL.createObjectURL(file) // Preview URL for display
   }));
 };
-
 
   return (
     <Card className="bg-white border border-gray-200 rounded-lg">
@@ -90,9 +102,13 @@ export const InvoiceHeader = ({ invoiceData, setInvoiceData }) => {
                 </label>
               </Button>
               {invoiceData.businessLogo && (
-                <p className="text-xs text-green-600 mt-2">
-                  {invoiceData.businessLogo.name}
-                </p>
+                <div className="mt-4">
+                  <img
+                    src={invoiceData.businessLogo}
+                    alt="Business Logo"
+                    className="w-24 h-24 object-contain mx-auto"
+                  />
+                </div>
               )}
             </div>
           </div>

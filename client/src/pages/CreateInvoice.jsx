@@ -206,6 +206,7 @@ const validateBillToPincode = () => {
 
   const conversionRate = exchangeRates[invoiceData.currency] || 1;
   const currencySymbol = currencySymbols[invoiceData.currency] || "₹";
+  
 
   useEffect(() => {
     const fetchBillFromData = async () => {
@@ -217,15 +218,7 @@ const validateBillToPincode = () => {
           },
         });
         if (res.data?.billFrom) {
-          setBillFromData(prev => ({
-            ...prev,
-            ...res.data.billFrom,
-            state: res.data.billFrom?.state ?? "",
-            email: res.data.billFrom?.email ?? "",
-            phone: res.data.billFrom?.phone ?? "",
-            gstin: res.data.billFrom?.gstin ?? "",
-            pan: res.data.billFrom?.pan ?? "",
-          }));
+          setBillFromData(res.data.billFrom);
         }
       } catch (error) {
         console.error("Failed to fetch bill-from data:", error);
@@ -258,6 +251,12 @@ const validateBillToPincode = () => {
         const res = await api.get(`/invoices/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+         
+         // FIX: convert stored logo path to full URL for preview
+    
+
+      
+
 
         const data = res.data;
         setInvoiceData(data.invoiceData || {});
@@ -283,94 +282,83 @@ const validateBillToPincode = () => {
   console.log("currentStep updated to:", currentStep);
 }, [currentStep]);
 
-const hasCompleteBillTo = (bill) => {
-  const required = ["businessName", "address", "city", "state", "pincode"];
-  return required.every((k) => bill[k]?.trim());
-};
 
+const handleSaveAndContinue = async () => {
+  console.log("Save and continue");
 
-  const handleSaveAndContinue = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const formData = new FormData();
+  try {
+    setUploading(true);
+    setUploadProgress(0);
 
-      formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
-      formData.append("invoiceDate", invoiceData?.date || "");
-      formData.append("dueDate", invoiceData?.dueDate || "");
+    const token = localStorage.getItem("token");
+    const formData = new FormData();
 
-      if (invoiceData?.businessLogo instanceof File) formData.append("businessLogo", invoiceData.businessLogo);
-    if (invoiceData?.qrFile instanceof File) formData.append("qrImage", invoiceData.qrFile);
-    // fallback: base64 string
-    else if (invoiceData?.qrPreviewUrl) formData.append("qrImageBase64", invoiceData.qrPreviewUrl);
+    // Basic invoice fields
+    formData.append("invoiceNumber", invoiceData?.invoiceNumber || "");
+    formData.append("invoiceDate", invoiceData?.date || "");
+    formData.append("dueDate", invoiceData?.dueDate || "");
 
+    // Files
+    if (invoiceData?.businessLogo instanceof File) {
+      formData.append("businessLogo", invoiceData.businessLogo);
+    }
+    if (invoiceData?.qrFile instanceof File) {
+      formData.append("qrImage", invoiceData.qrFile);
+    } else if (invoiceData?.qrPreviewUrl) {
+      formData.append("qrImageBase64", invoiceData.qrPreviewUrl);
+    }
     if (invoiceData.attachments?.length) {
-      invoiceData.attachments.forEach((file) => {
+      invoiceData.attachments.forEach(file => {
         if (file instanceof File) formData.append("attachments", file);
       });
     }
+    if (invoiceData?.signature instanceof File) {
+      formData.append("signature", invoiceData.signature);
+    }
 
-    if (invoiceData?.signature instanceof File) formData.append("signature", invoiceData.signature);
-
-      if (!selectedClientId?.trim() && !hasCompleteBillTo(billToData)) {
-  toast({
-    title: "Missing Recipient Info",
-    description: "Please select a client or manually fill in the Bill To section.",
-    variant: "destructive",
-  });
-  return;
-}
-
-if (!validateBillFromPincode() | !validateBillToPincode()) {
-    toast({
-      title: "Invalid Pincode",
-      description: "Please check the pincode and state for both Bill From and Bill To.",
-      variant: "destructive",
-    });
-    return;
-  }
-      
-
-      formData.append("billFrom", JSON.stringify(billFromData));
-      formData.append("billTo", JSON.stringify(billToData));
-      if (selectedClientId?.trim()) {
-        formData.append("billToDetail", selectedClientId);
-      }
-      formData.append("shipping", JSON.stringify(shippingDetails));
-      formData.append("gstConfig", JSON.stringify(gstConfig));
-      formData.append("items", JSON.stringify(invoiceData.items));
-      formData.append("summary", JSON.stringify({
-        subtotal: invoiceData.subtotal,
-        cgst: invoiceData.cgst,
-        sgst: invoiceData.sgst,
-        discount: invoiceData.discount,
-        totalAmount: invoiceData.grandTotal,
-      }));
-      formData.append("additionalOptions", JSON.stringify({
-        terms: invoiceData.terms,
-        notes: invoiceData.notes,
-        attachments: [],
-        contactDetails: invoiceData.contactDetails,
-        additionalInfo: invoiceData.additionalInfo || "",
-      }));
-      formData.append("currency", invoiceData.currency);
-      formData.append("status", "draft");
-      const shouldSaveAsClient = invoiceData.saveAsClient === true;
-      formData.append("saveAsClient", shouldSaveAsClient ? "true" : "false");
-
-      // Save bill-from data
-      await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
-        headers: { Authorization: `Bearer ${token}` },
+    // Validations
+    if (!selectedClientId?.trim() && !hasCompleteBillTo(billToData)) {
+      toast({
+        title: "Missing Recipient Info",
+        description: "Please select a client or manually fill in the Bill To section.",
+        variant: "destructive",
       });
+      return;
+    }
 
-       setUploading(true);
-    setUploadProgress(0);
+    if (!validateBillFromPincode() || !validateBillToPincode()) {
+      toast({
+        title: "Invalid Pincode",
+        description: "Please check the pincode and state for both Bill From and Bill To.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const config = {
-      headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-      onUploadProgress: (e) => {
-        if (e.total) setUploadProgress(Math.round((e.loaded * 100) / e.total));
-      },
-    };
+    // Structured JSON fields
+    formData.append("billFrom", JSON.stringify(billFromData));
+    formData.append("billTo", JSON.stringify(billToData));
+    formData.append("billToDetail", selectedClientId);
+    formData.append("shipping", JSON.stringify(shippingDetails));
+    formData.append("gstConfig", JSON.stringify(gstConfig));
+    formData.append("items", JSON.stringify(invoiceData.items));
+    formData.append("summary", JSON.stringify({
+      subtotal: invoiceData.subtotal,
+      cgst: invoiceData.cgst,
+      sgst: invoiceData.sgst,
+      discount: invoiceData.discount,
+      totalAmount: invoiceData.grandTotal,
+    }));
+    formData.append("additionalOptions", JSON.stringify({
+      terms: invoiceData.terms,
+      notes: invoiceData.notes,
+      attachments: [],
+      contactDetails: invoiceData.contactDetails,
+      additionalInfo: invoiceData.additionalInfo || "",
+    }));
+    formData.append("currency", invoiceData.currency);
+    formData.append("status", "draft");
+    formData.append("saveAsClient", invoiceData.saveAsClient);
 
       if (!billToData.email) {
     setEmailError("Email is required");
@@ -381,50 +369,63 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
     return;
   }
   setEmailError("");
+    // Save Bill From settings separately
+    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      let res;
-      if (isEditing) {
-        res = await api.put(`/invoices/${id}`, formData, {
-          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-        });
-      } else {
-        res = await api.post("/invoices", formData, {
-          headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
-        });
-      }
 
-        // Set the returned _id into state
-       const returnedInvoice = res?.data?.invoice || {};
-    // update local invoiceData with server URLs and _id
+    // Upload invoice
+    let res;
+    if (isEditing) {
+      res = await api.put(`/invoices/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+        onUploadProgress: e => {
+          if (e.total) setUploadProgress(Math.round((e.loaded * 100) / e.total));
+        },
+      });
+    } else {
+      res = await api.post("/invoices", formData, {
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+        onUploadProgress: e => {
+          if (e.total) setUploadProgress(Math.round((e.loaded * 100) / e.total));
+        },
+      });
+    }
+
+    // Update local invoice data
+    const returnedInvoice = res?.data?.invoice || {};
     setInvoiceData(prev => ({
       ...prev,
       _id: returnedInvoice._id || prev._id,
       qrImageUrl: returnedInvoice.qrImageUrl || prev.qrImageUrl,
-      businessLogoUrl: returnedInvoice.businessLogoUrl || prev.businessLogoUrl,
+      businessLogo: returnedInvoice.businessLogo || prev.businessLogoUrl,
       signatureUrl: returnedInvoice.signatureUrl || prev.signatureUrl,
       attachments: returnedInvoice.attachments || prev.attachments,
-      // clear qrFile (we uploaded it) but keep preview if server didn't return URL
       qrFile: null,
       qrPreviewUrl: returnedInvoice.qrImageUrl ? null : prev.qrPreviewUrl,
     }));
-      
 
-      toast({
-        title: "Success",
-        description: isEditing ? "Invoice updated successfully." : "Invoice created successfully.",
-      });
-      console.log("Current Step:", currentStep);
-      setCurrentStep(2);
-      console.log("Going to Step 2");
-    } catch (error) {
-      console.error("Error creating invoice:", error);
-      toast({
-        title: "Error",
-        description: "Something went wrong while saving invoice.",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Success",
+      description: isEditing ? "Invoice updated successfully." : "Invoice created successfully.",
+    });
+
+    setCurrentStep(2);
+    console.log("Going to Step 2");
+  } catch (error) {
+    console.error("Error creating invoice:", error);
+    toast({
+      title: "Error",
+      description: "Something went wrong while saving invoice.",
+      variant: "destructive",
+    });
+  } finally {
+    // Always reset upload state so UI doesn't get stuck
+    setUploading(false);
+  }
+};
+
 
   const handleSaveDraft = () => {
     toast({
@@ -432,6 +433,7 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
       description: "Invoice saved as draft successfully",
     });
   };
+
 
   const handleBackFromPreview = () => {
   setCurrentStep(1);
@@ -489,23 +491,11 @@ if (!validateBillFromPincode() | !validateBillToPincode()) {
             setBillToData={setBillToData}
             selectedClientId={selectedClientId}
             setSelectedClientId={setSelectedClientId}
-              pincodeError={billToError}
-    emailError={emailError}
-  setEmailError={setEmailError}
+            pincodeError={billToError}
+           emailError={emailError}
+            setEmailError={setEmailError}
           />
         </div>
-        <label className="flex items-center gap-2 text-sm mt-2">
-        <input
-          type="checkbox"
-          checked={invoiceData.saveAsClient}
-          onChange={(e) =>
-            setInvoiceData((prev) => ({ ...prev, saveAsClient: e.target.checked }))
-          }
-          className="rounded border-gray-300"
-        />
-         Save as client for future use
-        </label>
-
 
         {/* Action Buttons Row */}
         

@@ -34,29 +34,38 @@ exports.createInvoice = async (req, res) => {
       billToDetail,
       saveAsClient,
       bankDetails,
-      upiDetails
+      upiDetails,
     } = req.body;
 
-const parsedBillTo = safeParse(billTo);
+    const parsedBillTo = safeParse(billTo);
     const parsedShipping = safeParse(shipping);
     const parsedGstConfig = safeParse(gstConfig);
     const parsedItems = safeParse(items);
     const parsedSummary = safeParse(summary);
     const parsedAdditionalOptions = safeParse(additionalOptions);
-const parsedBankDetails = safeParse(bankDetails);
- const parsedUpiDetails = safeParse(upiDetails);
+    const parsedBankDetails = safeParse(bankDetails);
+    const parsedUpiDetails = safeParse(upiDetails);
 
-let clientId = null;
+    let clientId = null;
 
     if (billToDetail) {
       const existingClient = await Client.findOne({
         _id: billToDetail,
         user: req.user._id,
       });
-
       if (existingClient) {
         clientId = existingClient._id;
       }
+    }
+
+      let businessLogoPath = '';
+    if (req.files?.businessLogo?.[0]) {
+      businessLogoPath = req.files.businessLogo[0].path
+        .replace(/\\/g, '/') // Fix backslashes to forward slashes
+        .replace(/^uploads/, '/uploads'); // Ensure starts with /uploads
+      
+      console.log("Original logo path:", req.files.businessLogo[0].path);
+      console.log("Normalized logo path:", businessLogoPath);
     }
 
     const invoice = new Invoice({
@@ -65,74 +74,67 @@ let clientId = null;
       invoiceNumber,
       invoiceDate,
       dueDate,
-      businessLogo: req.files['businessLogo'] ? req.files['businessLogo'][0].path : '',
+      businessLogo:businessLogoPath,
       billFrom: safeParse(billFrom),
       billTo: parsedBillTo,
-      shipping: safeParse(shipping),
-      gstConfig: safeParse(gstConfig),
+      shipping: parsedShipping,
+      gstConfig: parsedGstConfig,
       currency,
-      items: safeParse(items),
+      items: parsedItems,
       summary: parsedSummary,
       amount: parsedSummary?.totalAmount || 0,
       additionalOptions: {
-        ...safeParse(additionalOptions),
-        attachments: req.files['attachments']?.map(file => file.path) || [],
-        qrImage: req.files['qrImage']?.[0]?.path || '',
-        signature: req.files['signature']?.[0]?.path || '',
+        ...parsedAdditionalOptions,
+        attachments: req.files?.attachments?.map(file => file.path) || [],
+        qrImage: req.files?.qrImage?.[0]?.path || '',
+        signature: req.files?.signature?.[0]?.path || '',
       },
       bankDetails: parsedBankDetails,
       upiDetails: parsedUpiDetails,
       status: status || "Draft",
     });
 
-  const hasCompleteManualBillTo = (bill) => {
-  const required = ["businessName", "address", "city", "state", "pincode"];
-  return (
-    bill &&
-    required.every((k) => typeof bill[k] === "string" && bill[k].trim())
-  );
-};
+    const hasCompleteManualBillTo = (bill) => {
+      const required = ["businessName", "address", "city", "state", "pincode"];
+      return bill && required.every((k) => typeof bill[k] === "string" && bill[k].trim());
+    };
 
-if (saveAsClient === "true" && !clientId && hasCompleteManualBillTo(parsedBillTo)) {
-  const existing = await Client.findOne({
-    name: parsedBillTo.businessName,
-    user: req.user._id,
-  });
+    if (saveAsClient === "true" && !clientId && hasCompleteManualBillTo(parsedBillTo)) {
+      const existing = await Client.findOne({
+        name: parsedBillTo.businessName,
+        user: req.user._id,
+      });
 
-  if (!existing) {
-    const newClient = await Client.create({
-      user: req.user._id,
-      name: parsedBillTo.businessName || "",
-      email: parsedBillTo.email || "",
-      phone: parsedBillTo.phone || "",
-      gstNumber: parsedBillTo.gstin || "",
-      pan: parsedBillTo.pan || "",
-      address: parsedBillTo.address || "",
-      city: parsedBillTo.city || "",
-      state: parsedBillTo.state || "",
-      pincode: parsedBillTo.pincode || "",
-      country: parsedBillTo.country || "India",
-      status: "Active",
-    });
+      if (!existing) {
+        const newClient = await Client.create({
+          user: req.user._id,
+          name: parsedBillTo.businessName || "",
+          email: parsedBillTo.email || "",
+          phone: parsedBillTo.phone || "",
+          gstNumber: parsedBillTo.gstin || "",
+          pan: parsedBillTo.pan || "",
+          address: parsedBillTo.address || "",
+          city: parsedBillTo.city || "",
+          state: parsedBillTo.state || "",
+          pincode: parsedBillTo.pincode || "",
+          country: parsedBillTo.country || "India",
+          status: "Active",
+        });
+        invoice.billToDetail = newClient._id;
+      } else {
+        invoice.billToDetail = existing._id;
+      }
+    }
 
-    invoice.billToDetail = newClient._id;
-  } else {
-    invoice.billToDetail = existing._id;
-  }
-}
+    if (!invoice.billToDetail && !hasCompleteManualBillTo(invoice.billTo)) {
+      return res.status(400).json({
+        message: "Missing or incomplete recipient info. Select an existing client or fill every Bill-To field.",
+      });
+    }
 
-
-if (!invoice.billToDetail && !hasCompleteManualBillTo(invoice.billTo)) {
-  return res.status(400).json({
-    message:
-      "Missing or incomplete recipient info. Select an existing client or fill every Bill‑To field.",
-  });
-}
-
-
-await invoice.save();
-
+    await invoice.save();
     res.status(201).json({ message: "Invoice created", invoice });
+
   } catch (error) {
     console.error("Error creating invoice:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -229,7 +231,8 @@ exports.updateInvoice = async (req, res) => {
     if (bankDetails) updatedFields.bankDetails = JSON.parse(bankDetails);
 if (upiDetails) updatedFields.upiDetails = JSON.parse(upiDetails);
 
-
+     
+    
     if (req.files?.businessLogo) {
       updatedFields.businessLogo = req.files.businessLogo[0].path;
     }
@@ -301,7 +304,17 @@ exports.sendInvoiceEmail = async (req, res) => {
 
   try {
     // Download the PDF from your server
-    const pdfRes = await axios.get(pdfUrl, { responseType: "arraybuffer" });
+    const pdfRes = await axios.post(
+  pdfUrl,
+  {}, // no body needed
+  {
+    responseType: "arraybuffer",
+    headers: {
+      Authorization: req.headers.authorization,
+    },
+  }
+);
+
     const pdfBase64 = Buffer.from(pdfRes.data, "binary").toString("base64");
 
     // Send email via Brevo
@@ -328,6 +341,7 @@ exports.sendInvoiceEmail = async (req, res) => {
     );
     res.json({ success: true });
   } catch (err) {
+     console.error("Error sending invoice email:", err); 
     res.status(500).json({ error: "Failed to send email", details: err.message });
   }
 };
