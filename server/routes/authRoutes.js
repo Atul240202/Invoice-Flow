@@ -3,6 +3,7 @@ const { body } = require('express-validator');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const validateRequest = require('../middlewares/validateRequest');
+const auth = require('../middlewares/authMiddleware'); // Your auth middleware
 
 router.post(
   '/signup',
@@ -32,5 +33,7 @@ router.post("/forgot-password", authController.forgotPassword);
 
 router.post('/reset-password/:token', authController.resetPassword);
 
+// NEW: Logout route (protected)
+router.post('/logout', auth, authController.logout);
 
 module.exports = router;

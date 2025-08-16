@@ -144,3 +144,27 @@ exports.resetPassword = async (req, res) => {
     res.status(400).json({ message: "Invalid or expired token" });
   }
 };
+
+exports.logout = async (req, res) => {
+  try {
+    // Option A: Simple client-side logout (recommended for JWT)
+    res.status(200).json({ 
+      message: 'Logout successful',
+      instruction: 'Please remove token from client storage'
+    });
+
+    // Option B: If you want server-side token blacklisting
+    // You would need to implement a token blacklist in your database
+    // const token = req.header('Authorization')?.replace('Bearer ', '');
+    // if (token) {
+    //   await BlacklistedToken.create({ 
+    //     token: token, 
+    //     expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+    //   });
+    // }
+    
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Server error during logout' });
+  }
+};

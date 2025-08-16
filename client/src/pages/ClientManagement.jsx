@@ -261,6 +261,8 @@ const handleAddClient = async (e) => {
 };
 
   return (
+      <div className="mx-auto w-full max-w-[calc(100vw-10px)] md:max-w-[calc(100vw-90px)] lg:max-w-7xl space-y-6">
+          {/* Header */}
    <div className="min-h-screen bg-gray-50 w-full overflow-x-hidden">
     <div className="w-full max-w-none px-2 sm:px-4 lg:px-6 py-2 sm:py-4 lg:py-6">
       <div className="w-full animate-fade-in space-y-4 sm:space-y-6 lg:space-y-8">
@@ -353,19 +355,19 @@ const handleAddClient = async (e) => {
 
               {/* Filters - Desktop Always Visible, Mobile Collapsible */}
               <div className={`flex-col space-y-4 lg:flex-row lg:space-y-0 lg:space-x-4 w-full ${showMobileFilters ? 'flex' : 'hidden lg:flex'}`}>
-                <div className="w-full lg:w-auto lg:max-w-[180px]">
+                <div className="w-full lg:w-auto lg:max-w-[150px]">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
                     <SelectTrigger className="w-full h-12 sm:h-14 text-sm sm:text-base font-medium border-2 border-gray-300 filter-hover focus:border-blue-500 bg-white text-black">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
-                    <SelectContent className="bg-white shadow-xl border-2 border-gray-200 z-50">
+                    <SelectContent className="bg-white shadow-xl border-2 border-gray-200">
                       <SelectItem value="all" className="text-black dropdown-item">All Status</SelectItem>
                       <SelectItem value="Active" className="text-black dropdown-item">Active</SelectItem>
                       <SelectItem value="Inactive" className="text-black dropdown-item">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-full lg:w-auto lg:max-w-[180px]">
+                <div className="w-full lg:w-auto lg:max-w-[150px]">
                   <Select value={industryFilter} onValueChange={setIndustryFilter}>
                     <SelectTrigger className="w-full h-12 sm:h-14 text-sm sm:text-base font-medium border-2 border-gray-300 filter-hover focus:border-blue-500 bg-white text-black">
                       <SelectValue placeholder="All Industries" />
@@ -573,7 +575,7 @@ const handleAddClient = async (e) => {
                   {filteredClients.map((client) => (
                     <TableRow key={client._id} className="table-row-hover border-b border-gray-200">
                       <TableCell className="py-3 sm:py-4 lg:py-6 px-2 sm:px-4 min-w-[160px]">
-                        <div className="min-w-0 max-w-[140px]">
+                        <div className="min-w-0 max-w-[120px]">
                           <p className="font-bold text-black text-sm sm:text-base truncate">{client.name}</p>
                           <p className="text-xs sm:text-sm text-gray-600 font-medium truncate">{client.email}</p>
                           {/* Mobile: Show company and industry here */}
@@ -697,7 +699,7 @@ const handleAddClient = async (e) => {
       </div>
     </div>
    </div>
-  );
+   </div>  );
 };
 
 export default ClientManagement;
