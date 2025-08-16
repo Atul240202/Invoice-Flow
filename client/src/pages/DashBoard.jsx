@@ -3,7 +3,7 @@ import api from "../utils/api";
 import { AIInsightCard } from "../components/AIInsightCard";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
 import { Button } from "../components/button";
-import { StatCard } from "../components/Statcard";
+import { StatCard } from "../components/StatCard";
 import { Settings } from "lucide-react";
 import { useToast } from "../hooks/toast";
 
