@@ -212,7 +212,7 @@ const validateBillToPincode = () => {
     const fetchBillFromData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/settings/bill-from`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -370,7 +370,7 @@ const handleSaveAndContinue = async () => {
   }
   setEmailError("");
     // Save Bill From settings separately
-    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/settings/bill-from`, billFromData, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

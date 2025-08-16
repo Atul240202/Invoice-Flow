@@ -151,7 +151,7 @@ const ClientDetails = () => {
                           <DropdownMenuItem asChild
                           className="gap-2 text-blue-600 hover:bg-blue-50 focus:bg-blue-100 font-medium">
                           <a
-                            href={`http://localhost:5000/api/invoices/${inv._id}/download-pdf`}
+                            href={`${import.meta.env.VITE_API_URL}/api/invoices/${inv._id}/download-pdf`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >

@@ -24,7 +24,7 @@ const Reports = () => {
        const headers = {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       };
-      const response = await axios.get("http://localhost:5000/api/reports/monthly-trend", {headers});
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/reports/monthly-trend`, {headers});
 
       const trend = response.data?.monthlyTrend || [];
 
@@ -42,10 +42,10 @@ const Reports = () => {
       const totalRevenue = trend.reduce((sum, m) => sum + (m.income || 0), 0);
       setTotalRevenue(Number(totalRevenue.toFixed(2)));
 
-      const invoiceRes = await axios.get("http://localhost:5000/api/invoices/summary", { headers });
+      const invoiceRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/invoices/summary`, { headers });
       setTotalInvoices(invoiceRes.data.totalInvoices);
 
-      const clientRes = await axios.get("http://localhost:5000/api/clients/summary", { headers });
+      const clientRes = await axios.get(`${import.meta.env.VITE_API_URL}/api/clients/summary`, { headers });
        setTotalClients(clientRes.data.totalClients);
        setClientDistribution(clientRes.data.distribution || []);
 
@@ -138,7 +138,7 @@ const Reports = () => {
 
   const exportToPDF = async () => {
   try {
-    const res = await fetch("http://localhost:5000/api/export-pdf", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/export-pdf`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ from: "2024-07-01", to: "2024-07-31" }),

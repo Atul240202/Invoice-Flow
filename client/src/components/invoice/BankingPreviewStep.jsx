@@ -363,7 +363,7 @@ const BankingPreviewStep = ({
       const token = localStorage.getItem("token");
 
       const res = await axios.post(
-        `http://localhost:5000/api/invoices/${invoice._id}/download-pdf`,
+        `${import.meta.env.VITE_API_URL}/api/invoices/${invoice._id}/download-pdf`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },
