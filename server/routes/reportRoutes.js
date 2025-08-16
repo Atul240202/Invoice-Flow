@@ -18,7 +18,7 @@ router.post("/export-pdf", authMiddleware, async (req, res) => {
     const { from, to, type } = req.body;
     const userId = req.user._id;
 
-    console.log("✅ Export PDF for user:", userId);
+    console.log("Export PDF for user:", userId);
 
     const expenses = await getExpensesFiltered(from, to, type, userId); 
     console.log({ from, to, type, userId, totalExpenses: expenses.length });
@@ -27,9 +27,14 @@ router.post("/export-pdf", authMiddleware, async (req, res) => {
     const htmlContent = generateExpenseReportHTML({ expenses });
 
     const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+  args: chromium.args,
+  defaultViewport: chromium.defaultViewport,
+  executablePath: process.env.NODE_ENV === "production"
+    ? await chromium.executablePath   
+    : undefined,                      
+  headless: true,
+});
+
 
     const page = await browser.newPage();
     await page.setContent(htmlContent, { waitUntil: "networkidle0" });
