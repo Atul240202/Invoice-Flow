@@ -17,7 +17,7 @@ export default function BusinessSettings() {
     const fetchBusinessInfo = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/settings/business", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/settings/business`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setForm({
@@ -69,7 +69,7 @@ export default function BusinessSettings() {
       const token = localStorage.getItem("token");
 
       const res = await axios.put(
-        "http://localhost:5000/api/settings/business",
+        `${import.meta.env.VITE_API_URL}/api/settings/business`,
         {
           businessName: form.businessName,
           gstin: form.gstin,
