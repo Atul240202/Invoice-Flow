@@ -89,6 +89,7 @@ const CreateInvoice = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [billFromError, setBillFromError] = useState("");
 const [billToError, setBillToError] = useState("");
+const [emailError, setEmailError] = useState("");
 
   const [itemColumns, setItemColumns] = useState([
     { key: "item", label: "Item", visible: true },
@@ -211,7 +212,7 @@ const validateBillToPincode = () => {
     const fetchBillFromData = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/settings/bill-from", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/settings/bill-from`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -251,7 +252,7 @@ const validateBillToPincode = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
          
-         // ✅ FIX: convert stored logo path to full URL for preview
+         // FIX: convert stored logo path to full URL for preview
     
 
       
@@ -359,10 +360,20 @@ const handleSaveAndContinue = async () => {
     formData.append("status", "draft");
     formData.append("saveAsClient", invoiceData.saveAsClient);
 
+      if (!billToData.email) {
+    setEmailError("Email is required");
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(billToData.email)) {
+    setEmailError("Invalid email format");
+    return;
+  }
+  setEmailError("");
     // Save Bill From settings separately
-    await axios.post("http://localhost:5000/api/settings/bill-from", billFromData, {
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/settings/bill-from`, billFromData, {
       headers: { Authorization: `Bearer ${token}` },
     });
+
 
     // Upload invoice
     let res;
@@ -410,7 +421,7 @@ const handleSaveAndContinue = async () => {
       variant: "destructive",
     });
   } finally {
-    // ✅ Always reset upload state so UI doesn't get stuck
+    // Always reset upload state so UI doesn't get stuck
     setUploading(false);
   }
 };
@@ -423,7 +434,13 @@ const handleSaveAndContinue = async () => {
     });
   };
 
-  
+
+  const handleBackFromPreview = () => {
+  setCurrentStep(1);
+  setEmailError("");
+  methods.clearErrors && methods.clearErrors();
+};
+
   return (
     <FormProvider {...methods}>
   <div className="space-y-8 animate-fade-in max-w-7xl mx-auto">
@@ -435,7 +452,7 @@ const handleSaveAndContinue = async () => {
         billToData={billToData}
         gstConfig={gstConfig}
         shippingDetails={shippingDetails}
-        onBack={() => setCurrentStep(1)}
+        onBack={handleBackFromPreview}
         goToStep={setCurrentStep} 
       />
     ) : (
@@ -472,8 +489,11 @@ const handleSaveAndContinue = async () => {
           <BillToSection
             billToData={billToData}
             setBillToData={setBillToData}
-            selectedClientId={selectedClientId} 
-  setSelectedClientId={setSelectedClientId}
+            selectedClientId={selectedClientId}
+            setSelectedClientId={setSelectedClientId}
+            pincodeError={billToError}
+           emailError={emailError}
+            setEmailError={setEmailError}
           />
         </div>
 

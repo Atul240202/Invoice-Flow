@@ -36,7 +36,7 @@ export const GSTConfigModal = ({
   try {
     const token = localStorage.getItem("token");
 
-    const response = await fetch("http://localhost:5000/api/settings/gst-config", {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/settings/gst-config`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

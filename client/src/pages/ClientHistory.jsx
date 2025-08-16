@@ -41,7 +41,7 @@ const InvoiceHistory = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/api/invoices?date=${dateFilter}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/invoices?date=${dateFilter}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -75,7 +75,7 @@ const InvoiceHistory = () => {
       return;
     }
 
-    const response = await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/api/invoices/${invoiceId}`, {
       method: "PUT", 
       headers: {
         "Content-Type": "application/json",
@@ -134,7 +134,7 @@ const handleAction = async (action, invoice) => {
     const token = localStorage.getItem("token");
 
     const res = await axios.post(
-      `http://localhost:5000/api/invoices/${invoice._id}/download-pdf`,
+      `${import.meta.env.VITE_API_URL}/api/invoices/${invoice._id}/download-pdf`,
       {}, 
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -166,7 +166,7 @@ const handleAction = async (action, invoice) => {
 
       try {
         const token = localStorage.getItem("token");
-        await fetch(`http://localhost:5000/api/invoices/${invoiceId}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/api/invoices/${invoiceId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

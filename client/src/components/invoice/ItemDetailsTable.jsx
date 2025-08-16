@@ -201,16 +201,6 @@ export const ItemDetailsTable = ({
             </Button>
           </div>
 
-          {/* Footer Options */}
-          <div className="px-6 py-4 bg-gray-50 border-t flex flex-col md:flex-row justify-between text-sm">
-            <span className="text-blue-600 cursor-pointer hover:underline">
-              📈 Add Discount / Additional Charges
-            </span>
-            <span className="text-blue-600 cursor-pointer hover:underline">
-              📊 Summarize Total Quantity
-            </span>
-          </div>
-
         </div>
         </div>
       </CardContent>

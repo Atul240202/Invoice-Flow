@@ -54,6 +54,8 @@ export const BillToSection = ({
   selectedClientId,
   setSelectedClientId,
   pincodeError,
+  emailError,
+  setEmailError,
 }) => {
   const indianStates = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat", "Haryana",
@@ -61,7 +63,7 @@ export const BillToSection = ({
     "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
     "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
   ];
-
+ 
   const [showEmail, setShowEmail] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [showGST, setShowGST] = useState(false);
@@ -69,6 +71,13 @@ export const BillToSection = ({
   const [customFields, setCustomFields] = useState([]);
   const [clients, setClients] = useState([]);
   const [localPincodeError, setLocalPincodeError] = useState("");
+ 
+  const validateEmail = (email) => {
+    if (!email) return "Email is required";
+    // Optional: Add format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Invalid email format";
+    return "";
+  };
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -227,32 +236,27 @@ export const BillToSection = ({
           </div>
 
           {/* Add Email */}
-          {!showEmail ? (
-            <Button variant="outline" className="text-blue-600 border-blue-200" onClick={() => setShowEmail(true)}>
-              📧 Add Email
-            </Button>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Input
-                value={billToData.email}
-                onChange={e => setBillToData(prev => ({ ...prev, email: e.target.value }))}
-                className="h-10 border-gray-300 focus:border-blue-500"
-                placeholder="Email"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setShowEmail(false);
-                  setBillToData(prev => ({ ...prev, email: "" }));
-                }}
-                className="text-red-500"
-                title="Remove Email"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+          <div className="flex flex-col gap-1">
+    <label className="text-sm font-medium text-gray-700">
+      Client Email <span className="text-red-500">*</span>
+    </label>
+    <Input
+      value={billToData.email}
+      onChange={e => {
+        setBillToData(prev => ({ ...prev, email: e.target.value }));
+        setEmailError(""); // clear error on change
+      }}
+      onBlur={e => {
+        if (!e.target.value) setEmailError("Email is required");
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e.target.value)) setEmailError("Invalid email format");
+        else setEmailError("");
+      }}
+      className={`h-10 border-gray-300 focus:border-blue-500 ${emailError ? "border-red-500" : ""}`}
+      placeholder="Client Email"
+      required
+    />
+     {emailError && <span className="text-xs text-red-500">{emailError}</span>}
+  </div>
 
           {/* Add Phone Number */}
           {!showPhone ? (

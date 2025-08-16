@@ -50,7 +50,7 @@ const ExpenseTracker = () => {
   useEffect(() => {
       const fetchExpenses = async () => {
       try {
-        const res = await api.get("http://localhost:5000/api/expenses");
+        const res = await api.get(`${import.meta.env.VITE_API_URL}/api/expenses`);
         setExpenses(res.data); 
       } catch (err) {
         toast({
@@ -103,7 +103,7 @@ const ExpenseTracker = () => {
 });
 selectedFiles.forEach((file) => data.append("receipts", file));
 
-    const res = await api.post("http://localhost:5000/api/expenses", data);
+    const res = await api.post("/api/expenses", data);
 
     setExpenses((prev) => [...prev, res.data]); 
 
@@ -211,7 +211,7 @@ useEffect(() => {
   const fetchTrend = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("http://localhost:5000/api/reports/monthly-trend", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/monthly-trend`, {
         headers: {
           Authorization: `Bearer ${token}`, 
         },
@@ -269,7 +269,7 @@ const handleExportReport = async () => {
   const token = localStorage.getItem("token");
 
   try {
-    const res = await fetch("http://localhost:5000/api/reports/export-pdf", {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/export-pdf`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -295,7 +295,7 @@ const handleExportReport = async () => {
 };
 
 const handleExportGSTR3BPDF = async () => {
-  const res = await fetch("http://localhost:5000/api/reports/export-gstr3b-pdf", {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/export-gstr3b-pdf`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -318,7 +318,7 @@ const handleExportGSTR3BPDF = async () => {
 };
 
 const handleExportGSTR3BExcel = async () => {
-  const res = await fetch("http://localhost:5000/api/reports/export-gstr3b-excel", {
+  const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/export-gstr3b-excel`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

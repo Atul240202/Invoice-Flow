@@ -18,7 +18,7 @@ export const ShippingDetails = ({ shippingDetails, setShippingDetails }) => {
       console.log("Token:", localStorage.getItem("token"));
 
       try {
-        const res = await fetch("http://localhost:5000/api/settings/shipped-from", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/settings/shipped-from`, {
            method: "GET",
            headers: {
           "Content-Type": "application/json",

@@ -12,17 +12,18 @@ const authMiddleware = require("./middlewares/authMiddleware");
 
 dotenv.config();
 
-
-
 const app = express();
 
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-}))
+  origin: [
+    "http://localhost:5173",                        // local dev
+    "https://invoice-flow.onrender.com"    // deployed frontend
+  ],
+  credentials: true,
+}));
 
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -49,6 +50,12 @@ app.use('/api/invoices', invoiceRoutes);
 
 const clientRoutes = require('./routes/clientRoutes');
 app.use('/api/clients', clientRoutes);
+
+const dashboardRoutes = require('./routes/dashboardRoutes');
+app.use('/api/dashboard', dashboardRoutes);
+
+const expenseRoutes = require('./routes/expenseRoutes');
+app.use('/api/expenses', expenseRoutes);
 
 const baseUrl = process.env.BASE_URL || "http://localhost:5000";
 

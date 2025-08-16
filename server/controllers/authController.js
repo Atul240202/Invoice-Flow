@@ -99,9 +99,12 @@ exports.googleLogin = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Google login error:', error.message);
-    res.status(401).json({ message: 'Google login failed' });
-  }
+  console.error("Google login error details:", error);
+  res.status(401).json({ 
+    message: 'Google login failed', 
+    error: error.message || error 
+  });
+}
 };
 
 exports.forgotPassword = async (req, res) => {

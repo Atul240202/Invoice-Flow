@@ -23,7 +23,7 @@ export default function ProfileSettings() {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const res = await axios.get("http://localhost:5000/api/settings/profile", {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/settings/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setForm(res.data);
@@ -50,7 +50,7 @@ export default function ProfileSettings() {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.put("http://localhost:5000/api/settings/profile", form, {
+      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/settings/profile`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

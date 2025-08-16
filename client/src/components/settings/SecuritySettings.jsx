@@ -9,7 +9,7 @@ export default function SecuritySettings() {
   useEffect(() => {
     const fetchSecurityStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/settings/profile", {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/settings/profile`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
           },
@@ -27,7 +27,7 @@ export default function SecuritySettings() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/settings/security", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/settings/security`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -49,7 +49,7 @@ export default function SecuritySettings() {
 
   const handleToggle2FA = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/settings/security", {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/settings/security`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
