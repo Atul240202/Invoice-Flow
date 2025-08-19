@@ -73,6 +73,18 @@ function isPincodeValidForState(state, pincode) {
   return ranges.some(([start, end]) => pin >= start && pin <= end);
 }
 
+const hasCompleteBillTo = (billToData) => {
+  return (
+    billToData?.businessName?.trim() &&
+    billToData?.address?.trim() &&
+    billToData?.city?.trim() &&
+    billToData?.state?.trim() &&
+    billToData?.pincode?.trim() &&
+    billToData?.country?.trim() &&
+    billToData?.email?.trim()
+  );
+};
+
 const CreateInvoice = () => {
   const { toast } = useToast();
   const location = useLocation(); 

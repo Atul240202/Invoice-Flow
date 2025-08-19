@@ -40,14 +40,16 @@ export default function RegisterForm() {
       localStorage.setItem("token", res.data.token);
       navigate("/dashboard");
     } catch (err) {
-      if (err.response && err.response.data?.errors) {
-        console.log("Validation Errors:", err.response.data.errors);
-        setErrors(err.response.data.errors.map((e) => e.message));
-      } else if (err.response?.data?.message) {
-        setErrors([err.response.data.message]);
-      } else {
-        setErrors(["SignUp Failed"]);
-      }
+      if (err.response?.status === 409) {
+    setErrors(["User already exists. Please login instead."]);
+  } else if (err.response && err.response.data?.errors) {
+    console.log("Validation Errors:", err.response.data.errors);
+    setErrors(err.response.data.errors.map((e) => e.message));
+  } else if (err.response?.data?.message) {
+    setErrors([err.response.data.message]);
+  } else {
+    setErrors(["SignUp Failed"]);
+  }
     } finally {
       setLoading(false); // stop loader
     }
