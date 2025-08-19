@@ -70,7 +70,7 @@ const userSchema = new mongoose.Schema({
     gstConfig: {
        taxType: { type: String, enum: ['GST', 'None'], default: 'None' },
        placeOfSupply: { type: String },
-       gstType: { type: String, enum: ['CGST+SGST', 'IGST'], default: '' },
+       gstType: { type: String, enum: ['CGST+SGST', 'IGST'], default: undefined },
        gstin: { type: String },
        pan: { type: String },
     },

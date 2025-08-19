@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 
 
 exports.signup = async (req, res) => {
-    const { fullName, email, password, businessName, phone } = req.body;
+  const { fullName, email, password, businessName, phone } = req.body;
 
   try {
     const emailExists = await User.findOne({ email });
@@ -31,9 +31,20 @@ exports.signup = async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    console.error("Signup error:", err);
+
+    if (err.code === 11000) {
+      return res.status(400).json({ message: "Email or phone already registered" });
+    }
+
+    if (err.name === "ValidationError") {
+      return res.status(400).json({ message: err.message });
+    }
+
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
