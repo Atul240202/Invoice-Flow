@@ -60,6 +60,7 @@ const baseUrl = process.env.BASE_URL || "http://localhost:5000";
 
 const puppeteer = require("puppeteer");
 
+/*
 app.get('/api/invoices/:id/download-pdf', authMiddleware, async (req, res) => {
   try {
     const invoiceId = req.params.id;
@@ -129,7 +130,7 @@ app.get('/api/invoices/:id/download-pdf', authMiddleware, async (req, res) => {
     res.status(500).json({ error: "Failed to generate PDF." });
   }
 });
-
+*/
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

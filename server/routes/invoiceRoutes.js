@@ -4,6 +4,10 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const multer = require("multer");
 const Invoice = require("../models/Invoice");
 const generateInvoiceNumber = require("./generateInvoiceNumber");
+const puppeteer = require("puppeteer");
+const generateInvoiceHTML = require("../invoiceTemplate");
+const path = require("path");
+const dotenv = require("dotenv");
 
 const {
     createInvoice,
@@ -15,7 +19,8 @@ const {
    sendInvoiceEmail,
 } = require("../controllers/invoiceController");
 
-
+dotenv.config();
+const baseUrl = process.env.BASE_URL || "http://localhost:5000";
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, 'uploads/'),
@@ -107,6 +112,76 @@ router.get('/recent', authMiddleware, async (req, res) => {
   } catch (err) {
     console.error("Recent Invoices Error:", err);
     res.status(500).json({ message: "Failed to fetch recent invoices", error: err.message });
+  }
+});
+
+router.get('/:id/download-pdf', authMiddleware, async (req, res) => {
+  try {
+    const invoiceId = req.params.id;
+    const invoice = await Invoice.findById(invoiceId)
+      .populate('billFrom')
+      .populate('billTo');
+
+    if (!invoice || !invoice.billFrom || !invoice.billTo) {
+      return res.status(400).json({ error: "Invalid invoice or client/company info missing." });
+    }
+
+    const invoiceData = {
+      invoiceNumber: invoice.invoiceNumber,
+      date: invoice.invoiceDate?.toLocaleDateString("en-IN") || '',
+      dueDate: invoice.dueDate?.toLocaleDateString("en-IN") || '',
+      items: invoice.items || [],
+      gstRate: invoice.gstRate || 0,
+      igst: invoice.summary?.igst || 0,
+      cgst: invoice.summary?.cgst || 0,
+      sgst: invoice.summary?.sgst || 0,
+      discount: invoice.discount || 0,
+      additionalCharges: invoice.additionalCharges || 0,
+      businessLogo: invoice.businessLogo ? `${baseUrl}${invoice.businessLogo}` : '',
+      terms: invoice.additionalOptions.terms || '',
+      additionalOptions: {
+        ...invoice.additionalOptions,
+        qrImage: invoice.additionalOptions?.qrImage
+          ? `${baseUrl}/${invoice.additionalOptions.qrImage}`
+          : '',
+        signature: invoice.additionalOptions?.signature
+          ? `${baseUrl}/${invoice.additionalOptions.signature}`
+          : '',
+      },
+      billFromData: invoice.billFrom,
+      billToData: invoice.billTo,
+      bankDetails: invoice.bankDetails || {},
+    };
+
+    // Launch Puppeteer
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+
+    const page = await browser.newPage();
+    const htmlContent = generateInvoiceHTML(invoiceData);
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+    });
+
+    await browser.close();
+
+    const filename = `invoice-${invoice.invoiceNumber || invoice._id}.pdf`;
+
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename="${filename}"`,
+    });
+
+    res.send(pdfBuffer);
+
+  } catch (err) {
+    console.error("PDF generation error:", err);
+    res.status(500).json({ error: "Failed to generate PDF." });
   }
 });
 

@@ -10,7 +10,7 @@ import axios from "axios";
 import { useToast } from "../../hooks/toast";
 import { Label } from "../Label";
 import { Input } from "../Input";
-
+import { Loader2 } from "lucide-react";
 const API_BASE = import.meta.env.VITE_API_URL || "https://invoice-flow-backend.onrender.com";
 
 const parseSafe = (val) => {
@@ -34,6 +34,8 @@ const BankingPreviewStep = ({
 }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+    const [downloading, setDownloading] = useState(false);
+  const [sendingEmail, setSendingEmail] = useState(false);
   const [showBankForm, setShowBankForm] = useState(false);
   const [showBankDetails, setShowBankDetails] = useState(true);
   const [bankingDetails, setBankingDetails] = useState({
@@ -349,48 +351,52 @@ const BankingPreviewStep = ({
   };
 
   const downloadPDF = async (invoice, setLoading, toast) => {
-    if (!invoice || !invoice._id) {
-      toast?.({
-        title: "Download Failed",
-        description: "Invoice ID is missing.",
-        variant: "destructive",
-      });
-      return;
-    }
+  if (!invoice || !invoice._id) {
+    toast?.({
+      title: "Download Failed",
+      description: "Invoice ID is missing.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("token");
+  try {
+    setLoading(true);
+    const token = localStorage.getItem("token");
 
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/invoices/${invoice._id}/download-pdf`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-          responseType: "blob",
-        }
-      );
+    const res = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/invoices/${invoice._id}/download-pdf`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob", // Important for PDF
+      }
+    );
 
-      const url = window.URL.createObjectURL(
-        new Blob([res.data], { type: "application/pdf" })
-      );
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute("download", `invoice-${invoice._id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    } catch (err) {
-      console.error("PDF Download Error:", err);
-      toast?.({
-        title: "Download Failed",
-        description: "Unable to generate PDF",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    const url = window.URL.createObjectURL(
+      new Blob([res.data], { type: "application/pdf" })
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `invoice-${invoice._id}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    toast?.({
+      title: "Download Complete",
+      description: "Invoice PDF downloaded successfully.",
+    });
+  } catch (err) {
+    console.error("PDF Download Error:", err);
+    toast?.({
+      title: "Download Failed",
+      description: "Unable to generate PDF",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   // ...existing imports...
 
@@ -412,11 +418,12 @@ const handleSendEmail = async () => {
     return;
   }
 
-  setLoading(true);
+  setSendingEmail(true);
   try {
-    // 1. Generate PDF and get its URL (reuse your download endpoint)
     const token = localStorage.getItem("token");
-    const pdfRes = await axios.post(
+
+    // 1. (optional) fetch pdf - if backend handles attachment you can skip
+    await axios.post(
       `${API_BASE}/api/invoices/${invoiceData._id}/download-pdf`,
       {},
       {
@@ -424,15 +431,12 @@ const handleSendEmail = async () => {
         responseType: "blob",
       }
     );
-    // Convert blob to base64 (if you want to send from frontend, but better to send from backend)
-    // Instead, upload PDF to your backend and let backend send email
 
-    // 2. Call backend to send email with PDF
+    // 2. ask backend to send email
     await axios.post(
       `${API_BASE}/api/invoices/${invoiceData._id}/send-email`,
       {
         to: billToData.email,
-        pdfUrl: `${API_BASE}/api/invoices/${invoiceData._id}/download-pdf`,
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -450,9 +454,10 @@ const handleSendEmail = async () => {
       variant: "destructive",
     });
   } finally {
-    setLoading(false);
+    setSendingEmail(false);
   }
 };
+
 
 /*  const handleSaveBankDetails = async () => {
     if (!invoice._id) {
@@ -937,17 +942,39 @@ const handleSendEmail = async () => {
               <Printer className="mr-2 h-5 w-5" /> Print Invoice
             </Button>
             <Button
+             disabled={downloading}
               onClick={() => downloadPDF(invoiceData, setLoading, toast)}
               className="h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium"
             >
-              <Download className="mr-2 h-5 w-5" /> Download as PDF
+              {downloading ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Downloading...
+          </>
+        ) : (
+          <>
+            <Download className="mr-2 h-5 w-5" />
+            Download as PDF
+          </>
+        )}
             </Button>
 
             <Button
-              onClick={handleSendEmail}
+               disabled={sendingEmail}
+              onClick={() => handleSendEmail(invoiceData, setSendingEmail, toast)}
               className="h-14 bg-green-600 hover:bg-green-700 text-white font-medium"
             >
-              <Mail className="mr-2 h-5 w-5" /> Send via Email
+               {sendingEmail ? (
+          <>
+            <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+            Sending...
+          </>
+        ) : (
+          <>
+            <Mail className="mr-2 h-5 w-5" />
+            Send via Email
+          </>
+        )}
             </Button>
           </div>
         </CardContent>

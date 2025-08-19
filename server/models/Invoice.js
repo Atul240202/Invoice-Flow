@@ -52,7 +52,7 @@ const invoiceSchema = new mongoose.Schema({
         type: String, required: reqIfNotClient 
       },
       phone: { 
-        type: String, required: reqIfNotClient 
+        type: String
       },
       gstin:{ 
         type: String 
