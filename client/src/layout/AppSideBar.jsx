@@ -28,9 +28,7 @@ export function AppSidebar() {
     { title: "Settings", url: "/settings", icon: Settings },
   ];
 
-  const adminItems = [
-    { title: "Admin Panel", url: "/admin", icon: Shield },
-  ];
+  
 
   return (
     <div
@@ -137,62 +135,10 @@ export function AppSidebar() {
         </div>
 
         {/* Admin Menu */}
-        <div className="space-y-2 border-t border-gray-200 pt-4">
-          {isOpen && (
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
-              Administration
-            </h3>
-          )}
-          <div className="space-y-1">
-            {adminItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.url || 
-                              location.pathname.startsWith(item.url);
-              
-              return (
-                <NavLink
-                  key={item.url}
-                  to={item.url}
-                  onClick={() => {
-                    // Close sidebar on mobile after navigation
-                    if (window.innerWidth < 768) {
-                      setIsOpen(false);
-                    }
-                  }}
-                  className={`
-                    flex items-center gap-3 px-3 py-2.5 md:py-3 rounded-xl transition-all duration-200 group
-                    ${isActive 
-                      ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' 
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-purple-600'
-                    }
-                    ${!isOpen ? 'justify-center md:px-3' : ''}
-                  `}
-                >
-                  <Icon className={`
-                    h-4 w-4 md:h-5 md:w-5 flex-shrink-0 transition-transform duration-200
-                    ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-purple-600'}
-                    ${!isActive && 'group-hover:scale-110'}
-                  `} />
-                  
-                  <span className={`
-                    font-medium text-sm md:text-base transition-opacity duration-300 whitespace-nowrap
-                    ${isOpen ? 'opacity-100' : 'opacity-0 md:hidden'}
-                  `}>
-                    {item.title}
-                  </span>
-
-                  {/* Active indicator */}
-                  {isActive && isOpen && (
-                    <div className="ml-auto">
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                    </div>
-                  )}
-                </NavLink>
-              );
-            })}
-          </div>
-        </div>
+       
+        
       </div>
+      
 
       {/* Sidebar Footer - User Info */}
       <div className="p-3 md:p-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
