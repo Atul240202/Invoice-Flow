@@ -42,15 +42,7 @@ export function AppSidebar() {
     >
 
         {/* Sidebar Toggle Button - Always visible when collapsed */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="absolute top-3 left-4 z-50 p-2 rounded-lg border border-gray-300 shadow-sm bg-white hover:bg-blue-100 transition-all"
-          aria-label="Expand sidebar"
-        >
-          <Menu className="h-5 w-5 text-gray-600" />
-        </button>
-      )}
+     
       {/* Header */}
       <div className="flex items-center justify-between gap-4 p-4 md:p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-cyan-50 flex-shrink-0 relative">
         {/* Logo and Brand - Only show when open */}

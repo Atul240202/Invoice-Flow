@@ -2,7 +2,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { AppSidebar } from "./AppSideBar";
 import { useSidebar } from "../components/sidebar/SidebarContext";
 import { Button } from "../components/button";
-import { LogOut, Menu, ChevronLeft } from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { useEffect } from "react";
 
 export default function DashboardLayout() {
@@ -51,7 +51,7 @@ export default function DashboardLayout() {
       {/* Mobile Overlay */}
       {isOpen && (
         <div 
-          className="fixed inset-0  bg-opacity-50 z-40 md:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -72,18 +72,33 @@ export default function DashboardLayout() {
       `}>
         {/* Header */}
         <header className="flex items-center justify-between h-16 md:h-20 gap-4 px-4 md:px-6 lg:px-8 border-b border-gray-200 bg-white shadow-sm relative z-30">
-        
+          
+          {/* Left Section - Menu Button & Brand */}
+          <div className="flex items-center gap-3">
+            {/* Mobile Menu Button */}
+            <Button
+              onClick={() => setIsOpen(!isOpen)}
+              className="md:hidden p-2 hover:bg-gray-100 rounded-lg border-none shadow-none"
+              variant="ghost"
+            >
+              {isOpen ? (
+                <X className="h-6 w-6 text-gray-600" />
+              ) : (
+                <Menu className="h-6 w-6 text-gray-600" />
+              )}
+            </Button>
 
-          {/* Left Section - Brand (shows when sidebar is closed) */}
-          <div className={`flex items-center gap-3 transition-opacity duration-300 ${isOpen ? 'md:opacity-0' : 'opacity-100'}`}>
-            <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
-              <span className="text-white text-lg md:text-xl font-bold">IF</span>
-            </div>
-            <div className="hidden sm:flex flex-col">
-              <span className="font-bold text-lg md:text-xl text-gray-800">InvoiceFlow</span>
-              <span className="text-xs md:text-sm text-gray-500 font-medium">
-                Professional Invoice Management
-              </span>
+            {/* Brand (shows when sidebar is closed or on mobile) */}
+            <div className={`flex items-center gap-3 transition-opacity duration-300 ${isOpen ? 'md:opacity-0 opacity-100' : 'opacity-100'}`}>
+              <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center shadow-lg">
+                <span className="text-white text-lg md:text-xl font-bold">IF</span>
+              </div>
+              <div className="hidden sm:flex flex-col">
+                <span className="font-bold text-lg md:text-xl text-gray-800">InvoiceFlow</span>
+                <span className="text-xs md:text-sm text-gray-500 font-medium">
+                  Professional Invoice Management
+                </span>
+              </div>
             </div>
           </div>
 
@@ -96,8 +111,8 @@ export default function DashboardLayout() {
 
           {/* Right Section - User Actions */}
           <div className="flex items-center gap-3">
-            {/* User Info */}
-            <div className="hidden md:flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg">
+            {/* User Info - Hidden on mobile when sidebar is open */}
+            <div className={`hidden md:flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg transition-opacity duration-300 ${isOpen ? 'md:opacity-100' : 'opacity-100'}`}>
               <div className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-500 to-cyan-600 flex items-center justify-center">
                 <span className="text-white text-sm font-bold">U</span>
               </div>
@@ -127,7 +142,6 @@ export default function DashboardLayout() {
           </div>
         </div>
       </main>
-
-      </div>
+    </div>
   );
 }
