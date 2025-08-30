@@ -110,15 +110,17 @@ export const ItemDetailsTable = ({
     <Card className="bg-white border border-gray-200 rounded-lg shadow-sm">
       <CardContent className="p-0">
         <div className="w-full overflow-x-auto">
-          <div className="min-w-[600px]">
-            {/* Table Header */}
-            <div className="flex w-full bg-gray-100 border-b font-medium">
-              <div className="min-w-[160px] px-4 py-2 border-r">Item</div>
-              <div className="min-w-[90px] px-4 py-2 border-r">Quantity</div>
-              <div className="min-w-[120px] px-4 py-2 border-r">Rate</div>
-              <div className="min-w-[90px] px-4 py-2 border-r">GST %</div>
-              <div className="min-w-[120px] px-4 py-2">Amount</div>
-              <div className="w-8" />
+          <div className="min-w-[800px]">
+            {/* Table Header (Sticky) */}
+            <div className="sticky top-0 bg-gray-100 z-10 border-b font-medium">
+              <div className="flex">
+                <div className="w-[180px] px-4 py-2 border-r">Item</div>
+                <div className="w-[90px] px-4 py-2 border-r">Quantity</div>
+                <div className="w-[120px] px-4 py-2 border-r">Rate</div>
+                <div className="w-[80px] px-4 py-2 border-r">GST %</div>
+                <div className="w-[100px] px-4 py-2 border-r">Amount</div>
+                <div className="w-[40px] px-4 py-2">Action</div>
+              </div>
             </div>
 
             {/* Table Rows */}
@@ -126,7 +128,7 @@ export const ItemDetailsTable = ({
               {Array.isArray(invoiceData.items) &&
                 invoiceData.items.map((item, index) => (
                   <div key={index} className="flex w-full border-b items-center">
-                    <div className="min-w-[180px] px-4 py-2 border-r">
+                    <div className="w-[180px] px-4 py-2 border-r">
                       <Input
                         value={item.item}
                         onChange={(e) => updateItem(index, "item", e.target.value)}
@@ -134,7 +136,7 @@ export const ItemDetailsTable = ({
                         placeholder="Item name"
                       />
                     </div>
-                    <div className="min-w-[90px] px-4 py-2 border-r">
+                    <div className="w-[90px] px-4 py-2 border-r">
                       <Input
                         type="number"
                         value={item.quantity}
@@ -144,7 +146,7 @@ export const ItemDetailsTable = ({
                         className="h-8 text-center w-full"
                       />
                     </div>
-                    <div className="min-w-[120px] px-4 py-2 border-r">
+                    <div className="w-[120px] px-4 py-2 border-r">
                       <div className="flex items-center">
                         <span className="px-2 h-10 flex items-center bg-gray-100 border border-r-0 rounded-l text-sm text-gray-500">
                           {currencySymbol}
@@ -155,11 +157,11 @@ export const ItemDetailsTable = ({
                           onChange={(e) =>
                             updateItem(index, "rate", parseFloat(e.target.value) || 0)
                           }
-                          className="h-8 rounded-l-none px-2 w-full"
+                          className="h-8 rounded-l-none px-2 flex-1"
                         />
                       </div>
                     </div>
-                    <div className="min-w-[90px] px-4 py-2 border-r">
+                    <div className="w-[80px] px-4 py-2 border-r">
                       <Input
                         type="number"
                         value={item.gstRate}
@@ -169,11 +171,11 @@ export const ItemDetailsTable = ({
                         className="h-8 text-center w-full"
                       />
                     </div>
-                    <div className="min-w-[120px] px-4 py-2 text-sm font-medium text-gray-700">
+                    <div className="w-[100px] px-4 py-2 border-r text-sm font-medium text-gray-700">
                       {currencySymbol}
                       {formatNumber(item.amount, numberFormat)}
                     </div>
-                    <div className="w-8 flex items-center justify-center">
+                    <div className="w-[40px] px-4 py-2 flex items-center justify-center">
                       {invoiceData.items.length > 1 && (
                         <Button
                           onClick={() => removeItem(index)}

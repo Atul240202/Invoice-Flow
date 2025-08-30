@@ -27,11 +27,6 @@ router.post("/export-pdf", authMiddleware, async (req, res) => {
     const htmlContent = generateExpenseReportHTML({ expenses });
 
     const browser = await puppeteer.launch({
-  args: chromium.args,
-  defaultViewport: chromium.defaultViewport,
-  executablePath: process.env.NODE_ENV === "production"
-    ? await chromium.executablePath   
-    : undefined,                      
   headless: true,
 });
 

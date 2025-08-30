@@ -133,19 +133,41 @@ export const BillFromSection = ({ billFromData, setBillFromData, pincodeError })
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Select
-          value={billFromData.country ?? ""}
-          onValueChange={val => setBillFromData(prev => ({ ...prev, country: val }))}
-        >
-          <SelectTrigger className="h-10 border-gray-300">
-            <SelectValue placeholder="Select Country" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="India">India</SelectItem>
-            <SelectItem value="USA">USA</SelectItem>
-            <SelectItem value="UK">UK</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Country Select with forced downward direction */}
+        <div className="relative">
+          <Select
+            value={billFromData.country ?? ""}
+            onValueChange={val => setBillFromData(prev => ({ ...prev, country: val }))}
+          >
+            <SelectTrigger className="h-10 border-gray-300 focus:border-blue-500">
+              <SelectValue placeholder="Select Country" />
+            </SelectTrigger>
+            <SelectContent 
+              className="bg-white max-h-60 overflow-y-auto z-50 border border-gray-200 shadow-lg rounded-md"
+              side="bottom"
+              sideOffset={4}
+              align="start"
+              position="popper"
+              avoidCollisions={false}
+            >
+              {[
+                "India", "USA", "UK", "Canada", "Australia", "Germany", "France", "Italy",
+                "Spain", "Netherlands", "Sweden", "Norway", "Denmark", "Finland", "Brazil",
+                "Mexico", "China", "Japan", "South Korea", "Singapore", "Malaysia", "New Zealand",
+                "South Africa", "Russia", "UAE", "Saudi Arabia", "Egypt", "Turkey", "Thailand",
+                "Indonesia", "Philippines", "Vietnam", "Pakistan", "Bangladesh", "Sri Lanka"
+              ].map((country) => (
+                <SelectItem 
+                  key={country} 
+                  value={country}
+                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {country}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         <Input
           value={billFromData.businessName ?? ""}
@@ -179,26 +201,42 @@ export const BillFromSection = ({ billFromData, setBillFromData, pincodeError })
           </div>
         </div>
 
-        <Select
-          value={billFromData.state ?? ""} 
-          onValueChange={(val) => setBillFromData(prev => ({ ...prev, state: val }))}
-        >
-          <SelectTrigger className="h-10 border-gray-300">
-            <SelectValue placeholder="Select State" />
-          </SelectTrigger>
-          <SelectContent>
-            {indianStates.map(state => (
-              <SelectItem key={state} value={state}>{state}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* State Select with forced downward direction */}
+        <div className="relative">
+          <Select
+            value={billFromData.state ?? ""} 
+            onValueChange={(val) => setBillFromData(prev => ({ ...prev, state: val }))}
+          >
+            <SelectTrigger className="h-10 border-gray-300">
+              <SelectValue placeholder="Select State" />
+            </SelectTrigger>
+            <SelectContent 
+              className="bg-white max-h-60 overflow-y-auto z-50 border border-gray-200 shadow-lg rounded-md"
+              side="bottom"
+              sideOffset={4}
+              align="start"
+              position="popper"
+              avoidCollisions={false}
+            >
+              {indianStates.map(state => (
+                <SelectItem 
+                  key={state} 
+                  value={state}
+                  className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                >
+                  {state}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Optional Fields with Validation */}
         {showEmail ? (
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
-                value={billFromData.email}
+                value={billFromData.email || ""}
                 onChange={e => {
                   const val = e.target.value;
                   setBillFromData(prev => ({ ...prev, email: val }));
@@ -225,7 +263,7 @@ export const BillFromSection = ({ billFromData, setBillFromData, pincodeError })
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
-                value={billFromData.phone}
+                value={billFromData.phone || ""}
                 onChange={e => {
                   const val = e.target.value;
                   setBillFromData(prev => ({ ...prev, phone: val }));
@@ -252,7 +290,7 @@ export const BillFromSection = ({ billFromData, setBillFromData, pincodeError })
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
-                value={billFromData.gstin}
+                value={billFromData.gstin || ""}
                 onChange={e => {
                   const val = e.target.value;
                   setBillFromData(prev => ({ ...prev, gstin: val }));
@@ -279,7 +317,7 @@ export const BillFromSection = ({ billFromData, setBillFromData, pincodeError })
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <Input
-                value={billFromData.pan}
+                value={billFromData.pan || ""}
                 onChange={e => {
                   const val = e.target.value.toUpperCase();
                   setBillFromData(prev => ({ ...prev, pan: val }));

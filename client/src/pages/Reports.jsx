@@ -138,11 +138,14 @@ const Reports = () => {
 
   const exportToPDF = async () => {
   try {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/export-pdf`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ from: "2024-07-01", to: "2024-07-31" }),
-    });
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/reports/export-pdf`, {
+  method: "POST",
+  headers: { 
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+  },
+  body: JSON.stringify({ from: "2025-07-01", to: "2025-08-30" }),
+});
 
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
